@@ -6,49 +6,56 @@
 # cjfiscus; 2020-09-12
 #
 #
-############ Genotype filtering of highly heterozygous sites-------
 
+############ Genotype filtering of highly heterozygous sites-------
+# Result from 007a_het_sites.R
 # load genotype count data
 # usage
 # Rscript plot_frqx.R plink.gcount sites.txt 0.1 prefix
 # args[1] is plink2 gcount file with cols=chrom,pos,ref,alt,homref,refalt,homalt1
 # args[2] is min het threshold for filtered list
 # args[3] is output prefix
-args = commandArgs(trailingOnly=TRUE)
 
-# # load data -- over 15 million rows so it takes a minute
-# # this is a distribution before filtering to 5% heterozygosity
-# gcount <- read.csv("~/Documents/PhD/Research/capsella_population_structure/vcf_filtering/NPCRCG_CBP/NPCRCG_CBP2.gcount", 
-#                    sep = "\t", header = T)
-# 
-# # caluclate fractions
-# gcount <- 
-# # prepare for plotting
-# long<- tidyr::pivot_longer(sub, cols = c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT"), names_to = "measure")
-# 
-# # plotdis
-# p1<-ggplot(long, aes(x=value, color=measure), alpha=0.5) +
-#   geom_density() +
-#   theme_classic() +
-#   theme(legend.position="top")
-# #out<-paste0(args[3], "_frqx.jpeg")
-# out<-paste0("~/Documents/PhD/Research/capsella_population_structure/vcf_filtering/CBPCRCG", "_frqx.jpeg")
-# ggsave(out, p1, height=3, width=5)
-# 
-# long2<- tidyr::pivot_longer(sub1, cols = c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT"), names_to = "measure")
-# 
-# # plotdis
-# p2<-ggplot(long2, aes(x=value, color=measure), alpha=0.5) +
-#   geom_density() +
-#   theme_classic() +
-#   theme(legend.position="top")
-# #out<-paste0(args[3], "_frqx.jpeg")
-# out<-paste0("~/Documents/PhD/Research/capsella_population_structure/vcf_filtering/CBPCRCG_removed", "_frqx.jpeg")
-# ggsave(out, p2, height=3, width=5)
+# load data -- over 15 million rows so it takes a minute
+# this is a distribution before filtering to 5% heterozygosity
+gcount <- read.csv("~/Documents/PhD/Research/capsella_population_structure/vcf_filtering/NPCRCG_CBP/NPCRCG_CBP2.gcount",
+                   sep = "\t", header = T)
+
+# caluclate fractions
+gcount$TOTAL<-df$HOM_REF_CT+df$HET_REF_ALT_CTS+df$HOM_ALT1_CT #sum allele freq
+gcount$FRAC_HET<-df$HET_REF_ALT_CTS/df$TOTAL # calculate fractions
+gcount$FRAC_HOMREF<-df$HOM_REF_CT/df$TOTAL 
+gcount$FRAC_HOMALT<-df$HOM_ALT1_CT/df$TOTAL
+
+# prepare for plotting
+long<- tidyr::pivot_longer(sub, cols = c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT"), names_to = "measure")
+
+# plot heterozygosity before filtering
+p1<-ggplot(long, aes(x=value, color=measure), alpha=0.5) +
+  geom_density() +
+  theme_classic() +
+  theme(legend.position="top")
+#out<-paste0(args[3], "_frqx.jpeg")
+out<-paste0("~/Documents/PhD/Research/vcf_filtering/plots/",SET, "_frqx.jpeg")
+ggsave(out, p1, height=3, width=5)
+
+# make dataset after filtering
+gcount2 <- gcount[gcount$FRAC_HET < 0.2,]
+
+long2<- tidyr::pivot_longer(sub1, cols = c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT"), names_to = "measure")
+
+# plotdis
+p2<-ggplot(long2, aes(x=value, color=measure), alpha=0.5) +
+  geom_density() +
+  theme_classic() +
+  theme(legend.position="top")
+#out<-paste0(args[3], "_frqx.jpeg")
+out<-paste0("~/Documents/PhD/Research/capsella_population_structure/vcf_filtering/CBPCRCG_removed", "_frqx.jpeg")
+ggsave(out, p2, height=3, width=5)
 
 ############# plot depth----------------
 
-# # plot with threshold 
+# # plot with threshold
 # p1<-ggplot(df, aes(x=V3)) + geom_density() +
 #   geom_vline(aes(xintercept=thres), color="red") +
 #   theme_classic() +
@@ -59,33 +66,32 @@ args = commandArgs(trailingOnly=TRUE)
 
 
 ############## Distribution of Missing Genotypes-----------
-# load data for missingness
-#smiss <- read.csv("~/Documents/PhD/Research/capsella_population_structure/vcf_filtering/NPCRCG_CBP/NPCRCG.smiss", 
-#                  sep = "\t", header = T)
-vmiss <- read.csv("~/Documents/PhD/Research/capsella_population_structure/vcf_filtering/NPCRCG_CBP/NPCRCG.vmiss", 
+# load data for site missingness
+vmiss <- read.csv("~/Documents/PhD/Research/vcf_filtering/large_files/NPCRCG_CBP2.vmiss", 
                    sep = "\t", header = T)
 
-# load vcf sample data
-vcf_dat <- read.csv("~/Documents/PhD/Research/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata.txt", 
-                    sep = "\t", header = T)
+# load data for site missingness after removing individuals that failed
+vmiss_prop <- read.csv("~/Documents/PhD/Research/vcf_filtering/large_files/rmInd_NPCRCGCBP2.vmiss", 
+                       sep = "\t", header = T)
 
-# current filter
-vmiss_old_filt <- vmiss[which(vmiss$F_MISS < 0.05),]
+# filter of 20% missing
+vmiss_filt <- vmiss[which(vmiss$F_MISS < 0.2),]
 
-# new proposed filter of 20% missing
-vmiss_new_filt <- vmiss[which(vmiss$F_MISS < 0.2),]
+vmiss_pfilt <- vmiss_prop[which(vmiss_prop$F_MISS < 0.2),]
 
 
 #plot missing-ness by scaffold
 vmiss_p1 <- ggplot() + geom_boxplot(data = vmiss, aes(x=X.CHROM, y = F_MISS))
-ggsave("./missing_variants2.jpeg", vmiss_p1, height=4, width=6)
+ggsave("~/Documents/PhD/Research/vcf_filtering/large_files/missing_variants.jpeg", vmiss_p1, height=4, width=6)
 
 # same plot but after filtering
-vmiss_p2 <- ggplot() + geom_boxplot(data = vmiss_old_filt, aes(x=X.CHROM, y = F_MISS))
-ggsave("./missing_variants_old_filt2.jpeg", vmiss_p2, height=4, width=6)
+vmiss_p2 <- ggplot() + geom_boxplot(data = vmiss_filt, aes(x=X.CHROM, y = F_MISS))
+ggsave("~/Documents/PhD/Research/vcf_filtering/large_files/missing_variants_filt.jpeg", vmiss_p2, height=4, width=6)
 
-vmiss_p3 <- ggplot() + geom_boxplot(data = vmiss_new_filt, aes(x=X.CHROM, y = F_MISS))
-ggsave("./missing_variants_new_filt2.jpeg", vmiss_p3, height=4, width=6)
+# plot with inds removed
+vmiss_p3 <- ggplot() + geom_boxplot(data = vmiss_pfilt, aes(x=X.CHROM, y = F_MISS))
+ggsave("~/Documents/PhD/Research/vcf_filtering/large_files/missing_variants_rmInd.jpeg", vmiss_p3, height=4, width=6)
+
 
 # plot missing-ness by species
 # join with data

@@ -48,15 +48,3 @@ sub1<-sub[sub$FRAC_HET > as.numeric(args[2]),]
 out<-paste0(args[3], "_hetmin",".txt")
 fwrite(sub1, out, quote=F, sep="\t")
 #write.table(sub1, file = paste0(args[3], "_hetmin.txt"), quote = F, sep = "\t", row.names = F, col.names = T)
-
-
-# prepare for plotting
-#long<- tidyr::pivot_longer(sub, cols = c("FRAC_HET", "FRAC_A1", "FRAC_A2"), names_to = "measure")
-
-# plotdis
-# p1<-ggplot(long, aes(x=value, color=measure), alpha=0.5) + 
-#   geom_density() +
-#   theme_classic() +
-#   theme(legend.position="top")
-# out<-paste0(args[4], "_frqx.jpeg")
-# ggsave(out, p1, height=3, width=5)

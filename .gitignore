@@ -1,3 +1,9 @@
+# other files
+.vmiss
+.gcount
+.smiss
+large_files/*
+.DS_Store
 # History files
 .Rhistory
 .Rapp.history
