@@ -110,9 +110,15 @@ echo "Heterozygosity site filter" >> "$FILEDIR"/log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp3.vcf | wc -l) \
 	>> "$FILEDIR"/log.txt
 
-# Keep sites where at least 80% is not missing
-#bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
-bcftools view --include 'F_MISSING<0.2' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
+# calculate site missingness
+plink2 --vcf "$PREFIX"_temp3.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
+  --allow-extra-chr \
+  --double-id \
+  --out "$PREFIX"
+
+# Keep sites where at least 95% is not missing
+bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
+#bcftools view --include 'F_MISSING<0.2' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
 
 echo "missing data filter complete"
 
@@ -135,19 +141,8 @@ MAXDP=$(head -n1 "$FILEDIR"/"$PREFIX"_depth_cutval.txt)
 bcftools view -i "INFO/DP < $MAXDP" "$PREFIX"_filter2.vcf.gz \
 	-Oz -o "$PREFIX"_filter3.vcf.gz
 
+## Write to filtering report
 echo "Depth filter complete"
-##########
-# write filtering report
-# touch "$FILEDIR"/log.txt
-# echo "$PREFIX" >> "$FILEDIR"/log.txt
-# echo "GATK best practices filter" >> "$FILEDIR"/log.txt
-# echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
-# 	>> "$FILEDIR"/log.txt
-# 
-# echo "biallelic sites, het, and missing data filter" >> "$FILEDIR"/log.txt
-# echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter2.vcf.gz | wc -l) \
-# 	>> "$FILEDIR"/log.txt
-
 echo "depth filter " >> "$FILEDIR"/log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter3.vcf.gz | wc -l) \
 	>> "$FILEDIR"/log.txt
@@ -162,9 +157,3 @@ plink2 --vcf "$PREFIX"_filter3.vcf.gz \
 
 # move to file directory
 mv "$PREFIX".scount "$FILEDIR"/
-
-# check site missingness distribution
-plink2 --vcf "$PREFIX"_temp3.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
-  --allow-extra-chr \
-  --double-id \
-  --out "$PREFIX"
