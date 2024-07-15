@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=NPCvariantVCFFilter
+#SBATCH --job-name=CBPvariantVCFFilter
 #SBATCH --nodes=10
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
@@ -22,7 +22,7 @@
 #
 #
 # change directory
-cd /mnt/scratch/wils1582/new_vcf/
+cd /mnt/scratch/wils1582/
 # purge modules
 module purge
 # load modules
@@ -31,21 +31,20 @@ module load PLINK/2.00a3.7-gfbf-2023a
 module load R/4.3.2-gfbf-2023a
 
 ## vars
-VCF=missed_NPCRCG_CBP_NYA_merged_rmCoF2.v.vcf
-FILEDIR=/mnt/home/wils1582/vcf_filtering/NPCRCG_CBP
-PREFIX=NPCRCG_CBP2
+VCF=CBP_CRCG_rmCoF2.v.vcf.gz
+FILEDIR=/mnt/home/wils1582/vcf_filtering/CBPCRCG_jul14
+PREFIX=CBP_CRCG
 RAWDIR=/mnt/research/josephslab/Maya/capsella/vcf/adrian_vcf/unfiltered
 OUTDIR=/mnt/research/josephslab/Maya/capsella/vcf/adrian_vcf/final_filtered
 
 #### PIPELINE #####
 # remove C orientalis that snuck in and F2s
-bcftools view --samples-file ^"$RAWDIR"/remove_CoF2.txt "$RAWDIR"/missed_NPCRCG_CBP_NYA_merged_all.v.vcf \
-   -o "$RAWDIR"/missed_NPCRCG_CBP_NYA_merged_rmCoF2.v.vcf
+bcftools view --samples-file ^"$RAWDIR"/remove_CoF2.txt "$RAWDIR"/July14.final_called.v.vcf -Oz -o CBP_CRCG_rmCoF2.v.vcf.gz
 # initial filters
 # 
 ## GATK best practices hard filters
 bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
-	"$RAWDIR"/"$VCF" \
+	"$VCF" \
 	> "$PREFIX"_temp.vcf
 bcftools view -f.,PASS "$PREFIX"_temp.vcf \
 	-Oz -o "$PREFIX"_filter1.vcf.gz
