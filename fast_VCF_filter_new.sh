@@ -109,7 +109,8 @@ echo "plink genotype caluclation complete"
 bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf > "$WORKDIR"/"$PREFIX"_sites.txt
 
 ## Produce list of sites to filter by allele frquency
-Rscript "$WORKDIR"/007a_het_sites.R "$WORKDIR"/"$PREFIX".gcount 0.05 "$WORKDIR"/"$PREFIX"
+#Rscript "$WORKDIR"/007a_het_sites.R "$WORKDIR"/"$PREFIX".gcount 0.05 "$WORKDIR"/"$PREFIX"
+Rscript 007a_het_sites.R "$WORKDIR"/"$PREFIX".gcount 0.05 "$WORKDIR"/"$PREFIX"
 
 # highly het sites to  remove file
 cut -f1,2 "$WORKDIR"/"$PREFIX"_hetmin.txt | tail -n+2 > "$WORKDIR"/remove.txt
@@ -144,7 +145,8 @@ echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter2.vcf.gz | wc -l) \
 ## calculate depth per site and plot
 bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_filter2.vcf.gz \
 	> "$WORKDIR"/depth.txt
-Rscript "$WORKDIR"/007b_depth_thresh.R "$WORKDIR"/depth.txt "$WORKDIR"/"$PREFIX"
+#Rscript "$WORKDIR"/007b_depth_thresh.R "$WORKDIR"/depth.txt "$WORKDIR"/"$PREFIX"
+Rscript 007b_depth_thresh.R "$WORKDIR"/depth.txt "$WORKDIR"/"$PREFIX"
 
 echo "depth calc complete"
 
