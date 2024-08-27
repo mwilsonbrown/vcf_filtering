@@ -45,88 +45,67 @@ PREFIX=allSites_CBP
 VCF=/mnt/research/josephslab/Adrian/CBP_NYC_JLv4/CBP_JLv4_v_CBP.merged.v.all.vcf
 RAWDIR=/mnt/scratch/wils1582
 INFILES=/mnt/home/wils1582/vcf_filtering
-
-# In the case that I do not have execute permissions for my own github repo
-# copy those files to the current directory
-cp "$INFILES"/*.R "$WORKDIR"
-cp "$INFILES"/individuals/*.txt "$WORKDIR"
-
-#### PIPELINE #####
-### GATK best practices hard filters
-bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
-"$WORKDIR"/"$VCF" \
-> "$PREFIX"_temp.vcf
-bcftools view -f.,PASS "$PREFIX"_temp.vcf \
--Oz -o "$PREFIX"_filter1.vcf.gz
-
-echo "Filter1 complete"
-
-## start fitering report
-touch "$WORKDIR"/log.txt
-
-echo "$PREFIX" >> "$WORKDIR"/log.txt
-echo "GATK best practices filter" >> "$WORKDIR"/log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
->> "$WORKDIR"/log.txt
-echo "Sample count" >> "$WORKDIR"/log.txt
-echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
->> "$WORKDIR"/log.txt
-
-# remove temp
-#rm "$PREFIX"_temp.vcf
-
-## require 3 reads to call and keep only biallelic sites; dump entirely missing sites
-bcftools filter -e'FMT/DP<3' -S . "$PREFIX"_filter1.vcf.gz | bcftools view -i 'F_MISSING<1' -m2 -M2 -Oz -o "$PREFIX"_temp2.vcf
-
-# log progress
-echo "temp2 complete"
-
-echo "3 reads called and biallelic sites" >> "$WORKDIR"/log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
->> "$WORKDIR"/log.txt
-
-##########
-# filter sites with > 5% het & > 5% missing data
-## calculate proportion het per site with plink
-plink2 --vcf "$PREFIX"_temp2.vcf \
---geno-counts cols=chrom,pos,ref,alt,homref,refalt,homalt1 \
---allow-extra-chr \
---double-id \
---out "$PREFIX"
-
-echo "plink genotype caluclation complete"
-
-# Move frequency file to directory
-#mv "$PREFIX".gcount "$WORKDIR"/
-
-## list of site ids for following Rscript
-bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf > "$WORKDIR"/"$PREFIX"_sites.txt
-
-## Produce list of sites to filter by allele frquency
-#Rscript "$WORKDIR"/007a_het_sites.R "$WORKDIR"/"$PREFIX".gcount 0.05 "$WORKDIR"/"$PREFIX"
-Rscript 007a_het_sites.R "$WORKDIR"/"$PREFIX".gcount 0.05 "$WORKDIR"/"$PREFIX"
-
-# highly het sites to  remove file
-cut -f1,2 "$WORKDIR"/"$PREFIX"_hetmin.txt | tail -n+2 > "$WORKDIR"/remove.txt
-
-## remove highly heterozygous sites and sites with 5% missing calls
-bcftools view --targets-file ^"$WORKDIR"/remove.txt "$PREFIX"_temp2.vcf -o "$PREFIX"_temp3.vcf
-
-# log
-echo "heterozygisty filter complete"
-
-echo "Heterozygosity site filter" >> "$WORKDIR"/log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp3.vcf | wc -l) \
-	>> "$WORKDIR"/log.txt
+#
+## In the case that I do not have execute permissions for my own github repo
+## copy those files to the current directory
+#cp "$INFILES"/*.R "$WORKDIR"
+#cp "$INFILES"/individuals/*.txt "$WORKDIR"
+#
+##### PIPELINE #####
+#### GATK best practices hard filters
+#bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
+#"$VCF" \
+#> "$PREFIX"_temp.vcf
+#bcftools view -f.,PASS "$PREFIX"_temp.vcf \
+#-Oz -o "$PREFIX"_filter1.vcf.gz
+#
+#echo "Filter1 complete"
+#
+### start fitering report
+#touch "$WORKDIR"/log.txt
+#
+#echo "$PREFIX" >> "$WORKDIR"/log.txt
+#echo "GATK best practices filter" >> "$WORKDIR"/log.txt
+#echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
+#>> "$WORKDIR"/log.txt
+#echo "Sample count" >> "$WORKDIR"/log.txt
+#echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
+#>> "$WORKDIR"/log.txt
+#
+## remove temp
+##rm "$PREFIX"_temp.vcf
+#
+### require 3 reads to call and keep only biallelic sites; dump entirely missing sites
+#bcftools filter -e'FMT/DP<3' -S . "$PREFIX"_filter1.vcf.gz | bcftools view -i 'F_MISSING<1' -m2 -M2 -Oz -o "$PREFIX"_temp2.vcf
+#
+## log progress
+#echo "temp2 complete"
+#
+#echo "3 reads called and biallelic sites" >> "$WORKDIR"/log.txt
+#echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
+#>> "$WORKDIR"/log.txt
+#
+###########
+## filter sites with > 5% het & > 5% missing data
+### calculate proportion het per site with plink
+#plink2 --vcf "$PREFIX"_temp2.vcf \
+#--geno-counts cols=chrom,pos,ref,alt,homref,refalt,homalt1 \
+#--allow-extra-chr \
+#--double-id \
+#--out "$PREFIX"
+#
+#echo "plink genotype caluclation complete"
+#
+# Most invariant sites are heterozygous calls so we do not filter those sites out
 
 # calculate site missingness
-plink2 --vcf "$PREFIX"_temp3.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
+plink2 --vcf "$PREFIX"_temp2.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
   --allow-extra-chr \
   --double-id \
   --out "$PREFIX"
 
 # Keep sites where at least 95% is not missing
-bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
+bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp2.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
 
 echo "missing data filter complete"
 
