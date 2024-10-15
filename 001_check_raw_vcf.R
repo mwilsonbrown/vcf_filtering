@@ -5,7 +5,7 @@
 
 # arg[1] is the variant only vcf
 # arg[2] is the invariant and variant all sites vcf
-args = commandArgs(trailingOnly=TRUE)
+args <- commandArgs(trailingOnly=TRUE)
 
 # get ourput directory from environment
 outdir <- Sys.getenv("OUTDIR")
@@ -19,7 +19,7 @@ vcf_info <- read.csv("~/capsella_sample_info/generated_mkwb/Capsella_vcf_metadat
 # invcf <- read.csv("~/Documents/PhD/Research/vcf_filtering/individuals/allsites_cbp.txt",
 #                   header = F, sep = "\t")
 
-samples_var <- read.csv(arg[1], sep = "\t",
+samples_var <- read.csv(args[1], sep = "\t",
                         header = F)
 
 # load dplyr
@@ -74,7 +74,7 @@ sink(NULL)
 
 ############## All Sites VCF
 
-samples_allsites <- read.csv(arg[2], sep = "\t",
+samples_allsites <- read.csv(args[2], sep = "\t",
                         header = F)
 
 dat <- left_join(samples_allsites, vcf_info, join_by("V1" == "vcf_sample_name"))
