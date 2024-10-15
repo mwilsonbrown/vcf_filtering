@@ -11,7 +11,7 @@ args = commandArgs(trailingOnly=TRUE)
 outdir <- Sys.getenv("OUTDIR")
 
 # read in vcf metadata
-vcf_info <- read.csv("~/Documents/PhD/Research/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata.txt",
+vcf_info <- read.csv("~/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata.txt",
                      header = T, sep = "\t")
 
 ##################### Variant only sites VCF
