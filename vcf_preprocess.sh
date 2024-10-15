@@ -8,6 +8,7 @@ ALLSITES_VCF=/mnt/research/josephslab/Adrian/CBP_NYC_JLv4/CBP_JLv4_v_CBP.merged.
 OUTDIR=/mnt/home/wils1582/vcf_filtering/individuals/
 
 # move to working directory
+cd ~/vcf_filtering
 
 # Modules
 module purge
