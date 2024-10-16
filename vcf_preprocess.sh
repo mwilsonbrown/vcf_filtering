@@ -3,7 +3,7 @@
 # Goal: to organize and streamline vcf data before processing through filtering
 
 # Variables
-VAR_VCF=/mnt/research/josephslab/Adrian/CBP_NYC_JLv4/BigAlignment/missed_NPCRCG_CBP_NYA_merged_all.v.vcf
+VAR_VCF=/mnt/research/josephslab/Adrian/CBP_NYC_JLv4/CG_subgenome/July14.final_called.v.vcf.gz
 ALLSITES_VCF=/mnt/research/josephslab/Adrian/CBP_NYC_JLv4/CBP_JLv4_v_CBP.merged.v.all.vcf
 OUTDIR=/mnt/home/wils1582/vcf_filtering/individuals
 

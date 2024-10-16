@@ -53,14 +53,14 @@ cbp <- cbp[str_detect(cbp$sample_name, "parent", negate = T),]
 rm <- cbp_all %>% anti_join(cbp)
 
 # write removal list to file
-write.table(rm$V1,
+write(rm$V1,
             paste(outdir, "removeCBP_vcf.txt", sep = "/"), 
-            quote = F, sep = "\t", row.names = F, col.names = F)
+            sep = "\t")
 
 # write C. grandiflora and Neslia paniculata to file so they are not removed during heterozygosity step
-write.table(exp_het$V1, 
+write(exp_het$V1, 
             paste(outdir, "CgNp.txt", sep = "/"), 
-            quote = F, sep = "\t", row.names = F, col.names = F)
+            sep = "\t")
 
 
 # generate table after removal of unwanted samples
