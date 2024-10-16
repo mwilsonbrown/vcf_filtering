@@ -31,6 +31,9 @@ plink --vcf $VCF --double-id \
         --keep /mnt/home/wils1582/vcf_filtering/ld_decay/nyc_vcf_sample.txt \
         --allow-extra-chr \
         --set-missing-var-ids @:# \
+        --maf 0.25 \
+        --geno 0.05 \
+        --mind 0.5 \
         --thin 0.1 -r2 gz \
         --ld-window 100 \
         --ld-window-kb 1000 \
