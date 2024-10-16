@@ -35,9 +35,11 @@ The actual calculation of linkage into averaged bins is done by the following py
 
 Then, to plot the output
 ```{r}
-library(tidyverse)
+library(ggplot2)
 # read in data
-ld_bins <- read_tsv("~/Documents/PhD/Research/vcf_filtering/ld_decay/nyc_chrAll.ld_decay_bins")
+ld_bins <- read.csv("~/Documents/PhD/Research/vcf_filtering/ld_decay/nyc_chrAll.ld_decay_bins",
+                    sep = "\t",
+                    header = T)
 
 
 # plot LD decay
@@ -60,5 +62,10 @@ ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
   geom_hline(yintercept = 0.1, color = "blue") +
   facet_wrap(~chr) +
   theme_bw()
+```
+
+Honestly, 500kb seems kind of long. I wonder if introgression from C. rubella might have something to do with it, so I will do the same analysis on the East Asian population.
+```{r}
+
 ```
 
