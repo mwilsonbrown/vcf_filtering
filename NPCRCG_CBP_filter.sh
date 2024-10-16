@@ -45,11 +45,12 @@ cp "$FILEDIR"/*.R ./
 
 #### PIPELINE #####
 # remove F2s, parent, and pool
-bcftools view --samples-file ^removeCBP_vcf.txt $RAW_VCF -Oz -o CBP_CRCG_rmF2.v.vcf.gz
+bcftools view --samples-file ^removeCBP_vcf.txt $RAW_VCF -Oz -o "$PREFIX"_rmF2.v.vcf.gz
 # initial filters
 #
 # 
 VCF="$PREFIX"_rmF2.v.vcf.gz
+
 ## GATK best practices hard filters
 bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
 	"$VCF" \
