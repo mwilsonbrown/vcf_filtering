@@ -37,7 +37,38 @@ Then, to plot the output
 ```{r}
 library(ggplot2)
 # read in data
-ld_bins <- read.csv("~/Documents/PhD/Research/vcf_filtering/ld_decay/nyc_chrAll.ld_decay_bins",
+nyc_ld_bins <- read.csv("~/Documents/PhD/Research/vcf_filtering/ld_decay/nyc_chrAll.ld_decay_bins",
+                    sep = "\t",
+                    header = T)
+
+
+# plot LD decay
+ggplot(nyc_ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_hline(yintercept = 0.1, color = "red") +
+  facet_wrap(~chr) +
+  theme_bw()
+
+# which bins size before LD reaches backgound level of about 0.1
+ggplot(subset(nyc_ld_bins, avg_R2 <= 0.1), aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_vline(xintercept = 500000, color = "red") +
+  facet_wrap(~chr) +
+  theme_bw()
+
+ggplot(nyc_ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_vline(xintercept = 500000, color = "red") +
+  geom_hline(yintercept = 0.1, color = "blue") +
+  facet_wrap(~chr) +
+  theme_bw() +
+  ggtitle("Linkage in New York City population")
+```
+
+Honestly, 500kb seems kind of long. I wonder if introgression from C. rubella might have something to do with it, so I will do the same analysis on the East Asian population.
+```{r}
+# read in data
+ld_bins <- read.csv("~/Documents/PhD/Research/vcf_filtering/ld_decay/easia_chrAll.ld_decay_bins",
                     sep = "\t",
                     header = T)
 
@@ -64,8 +95,29 @@ ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
   theme_bw()
 ```
 
-Honestly, 500kb seems kind of long. I wonder if introgression from C. rubella might have something to do with it, so I will do the same analysis on the East Asian population.
-```{r}
+This seems to indicate there is rarely LD oover 0.1 at any distance, which is equally confusing. I guess this just means I should use windows over 500kb?
+
+I also did not exclude SNPs in centromeric regions so it may be worth making a linkage map too.
+
+I can just document running ReLERNN here, for now.
+```{bash, eval = F}
+# needs tensorflow and CUDA with CuDNN
+module load TensorFlow/2.13.0-foss-2023a
+module load  cuDNN/8.9.7.29-CUDA-12.3.0
+ml scikit-learn/1.3.1-gfbf-2023a  matplotlib/3.7.2-gfbf-2023a 
+# also pip installed scikit-allel and msprime
+
+# I get some warnings: The scripts msp and mspms are installed in '/mnt/home/wils1582/.local/bin'.Consider adding this directory to PATH
+# So I added it to my path like this PATH=/mnt/home/wils1582/.local/bin:$PATH
+```
+
+
+```{bash, eval = F}
+#VCF must be biallelic with NO missing data, which is kind of kooky
+ReLERNN_SIMULATE 
+```
+
+
 
 ```
 
