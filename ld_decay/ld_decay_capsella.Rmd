@@ -1,0 +1,53 @@
+---
+title: "Noodling on LD decay"
+author: "Maya Wilson Brown"
+date: "2024-10-16"
+output: html_document
+---
+
+
+First, the script that generated the calculations of LD
+
+```{bash, code = readLines("~/Documents/PhD/Research/vcf_filtering/ld_decay/noodling_LD_decay.sh"), eval = FALSE}
+```
+
+The actual calculation of linkage into averaged bins is done by the following python script.
+```{bash, code = readLines("~/Documents/PhD/Research/vcf_filtering/ld_decay/ld_decay_calc.py"), eval = FALSE}
+```
+
+Then, to plot the output
+```{r}
+library(tidyverse)
+
+# read in data
+chr10_ld_bins <- read_tsv("~/Desktop/cbp_LD_JLv4_chr10.ld_decay_bins")
+
+# plot LD decay
+ggplot(chr10_ld_bins, aes(distance, avg_R2)) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_hline(yintercept = 0.04, color = "red")
+
+# plot looks not how I expected.
+# I guess 100-125kb windows are reasonable LD windows though?
+
+# read in data
+ld_bins <- read_tsv("~/Desktop/cbp_LD_JLv4_all.ld_decay_bins")
+
+
+# plot LD decay
+ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_hline(yintercept = 0.04, color = "red") +
+  geom_vline(xintercept = 1) +
+  facet_wrap(~chr) +
+  theme_bw()
+
+ggplot(subset(ld_bins, distance <= 150000), aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_hline(yintercept = 0.04, color = "red") +
+  geom_vline(xintercept = 1) +
+  facet_wrap(~chr) +
+  theme_bw()
+
+```
+
