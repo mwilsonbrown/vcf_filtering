@@ -28,10 +28,10 @@ module purge
 module load PLINK/1.9b_6.21-x86_64 
 
 plink --vcf $VCF --double-id \
-        --keep /mnt/home/wils1582/vcf_filtering/ld_decay/nyc_vcf_sample.txt \
+        --keep /mnt/home/wils1582/vcf_filtering/ld_decay/nyc_vcf_sample2.txt \
         --allow-extra-chr \
         --set-missing-var-ids @:# \
-        --maf 0.25 \
+        --maf 0.025 \
         --geno 0.05 \
         --mind 0.5 \
         --thin 0.1 -r2 gz \
@@ -41,5 +41,5 @@ plink --vcf $VCF --double-id \
         --make-bed \
         --out cbp_LD_JLv4_nyc
         
-# Then, calculate average LD in genomic bins
-python3 ld_decay_cal.py -i cbp_LD_JLv4_nyc -o nyc_chrAll
+# Then, calculate average LD in genomic bins; written in python 2 so need to activate that conda environment
+python ld_decay_cal.py -i cbp_LD_JLv4_nyc.ld.gz -o nyc_chrAll
