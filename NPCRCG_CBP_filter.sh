@@ -88,7 +88,7 @@ echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
 # filter sites with > 5% het & > 5% missing data
 ## calculate proportion het per site with plink
 plink2 --vcf "$PREFIX"_temp2.vcf \
-	--remove Cg.txt \
+	--remove CgNp.txt \
 	--geno-counts cols=chrom,pos,ref,alt,homref,refalt,homalt1 \
 	--allow-extra-chr \
 	--double-id \
