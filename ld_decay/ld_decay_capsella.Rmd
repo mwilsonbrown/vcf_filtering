@@ -7,6 +7,24 @@ output: html_document
 
 
 First, the script that generated the calculations of LD
+based on population distinctions
+```{r}
+pops <- read.csv("~/Documents/PhD/Research/capsella_population_structure/cbp_pop_str.txt", sep = "\t", header=T)
+
+nyc <- pops[which(str_detect(pops$vcf_sample_name, "L003")),]
+easia <- pops[which(pops$k3population == "E_Asia"),]
+
+write.table(nyc$vcf_sample_name, "~/Documents/PhD/Research/vcf_filtering/ld_decay/nyc_vcf_sample.txt",
+            row.names = F,
+            col.names = F,
+            quote = F)
+
+write.table(easia$vcf_sample_name, "~/Documents/PhD/Research/vcf_filtering/ld_decay/easia_vcf_sample.txt",
+            row.names = F,
+            col.names = F,
+            quote = F)
+```
+
 
 ```{bash, code = readLines("~/Documents/PhD/Research/vcf_filtering/ld_decay/noodling_LD_decay.sh"), eval = FALSE}
 ```
