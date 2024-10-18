@@ -141,26 +141,27 @@ bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_filter2.vcf.gz \
 Rscript 007b_depth_thresh.R depth.txt "$PREFIX"
 
 echo "depth calc complete"
-# 
-# ## filter on depth
-# MAXDP=$(head -n1 "$PREFIX"_depth_cutval.txt)
-# 
-# bcftools view -i "INFO/DP < $MAXDP" "$PREFIX"_filter2.vcf.gz \
-# 	-Oz -o "$PREFIX"_filter3.vcf.gz
-# 
-# ## Write to filtering report
-# echo "Depth filter complete"
-# echo "depth filter " >> log.txt
-# echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter3.vcf.gz | wc -l) \
-# 	>> log.txt
-# 
-# ##########
-# # calculate stats per ind
-# plink2 --vcf "$PREFIX"_filter3.vcf.gz \
-# 	--sample-counts cols=homref,het,homalt \
-# 	--allow-extra-chr \
-#         --double-id \
-#         --out "$PREFIX"
-# 
-# # move to file directory
+
+## filter on depth
+MAXDP=$(head -n1 "$PREFIX"_depth_cutval.txt)
+MINDP=$(tail -n1 "$PREFIX"_depth_cutval.txt)
+
+bcftools view -i 'INFO/DP < "$MAXDP & INFO/DP > "$MINDP"' "$PREFIX"_filter2.vcf.gz \
+	-Oz -o "$PREFIX"_filter3.vcf.gz
+
+## Write to filtering report
+echo "Depth filter complete"
+echo "depth filter " >> log.txt
+echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter3.vcf.gz | wc -l) \
+	>> log.txt
+
+##########
+# calculate stats per ind
+plink2 --vcf "$PREFIX"_filter3.vcf.gz \
+	--sample-counts cols=homref,het,homalt \
+	--allow-extra-chr \
+        --double-id \
+        --out "$PREFIX"
+
+# move to file directory
 # mv "$PREFIX".scount 

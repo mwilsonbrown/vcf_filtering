@@ -12,11 +12,13 @@ args = commandArgs(trailingOnly=TRUE)
 df<-read.table(args[1])
 
 # hard cut threshold
-thres<-quantile(df$V3)[4] + 1.5*IQR(df$V3)
+#thresh <- c(quantile(df$V3)[4] + 1.5*IQR(df$V3), quantile(df$V3)[2] - 1.5*IQR(df$V3))
+u_thresh <-quantile(df$V3)[4] + 1.5*IQR(df$V3)
+l_thresh <- quantile(df$V3)[2] - 1.5*IQR(df$V3)
 
 # # plot with threshold 
 # p1<-ggplot(df, aes(x=V3)) + geom_density() +
-#   geom_vline(aes(xintercept=thres), color="red") +
+#   geom_vline(aes(xintercept=thresh), color="red") +
 #   theme_classic() +
 #   xlab("INFO/DP")
 # #out<-paste0(args[2], "_depth.jpeg")
@@ -25,4 +27,4 @@ thres<-quantile(df$V3)[4] + 1.5*IQR(df$V3)
 
 # write out depth value
 out<-paste0(args[2], "_depth_cutval.txt")
-write.table(as.numeric(thres), out, quote=F, row.names=F, col.names=F)
+write.table(as.numeric(thresh), out, quote=F, row.names=F, col.names=F, sep = "\n")
