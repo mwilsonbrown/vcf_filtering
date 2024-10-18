@@ -7,6 +7,7 @@
 #SBATCH --time=0-50:00:00
 #SBATCH --partition=josephsnodes
 #SBATCH --account=josephsnodes
+#SBATCH --export=NONE
 #SBATCH --mem-per-cpu=8G
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=wils1582@msu.edu
