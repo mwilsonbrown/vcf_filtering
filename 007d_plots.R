@@ -55,14 +55,10 @@ ggsave(out, p2, height=3, width=5)
 
 ############# plot depth----------------
 
-# # plot with threshold
-# p1<-ggplot(df, aes(x=V3)) + geom_density() +
-#   geom_vline(aes(xintercept=thres), color="red") +
-#   theme_classic() +
-#   xlab("INFO/DP")
-# #out<-paste0(args[2], "_depth.jpeg")
-# out<-paste0("CBPCRCG", "_depth.jpeg")
-# ggsave(out, p1, height=5, width=5)
+p2 <- ggplot() + geom_density(data = cbp_msu, aes(x=V3)) +
+  xlim(0,7000) + geom_vline(aes(xintercept = thres_cbp), color="red") + 
+  geom_vline(aes(xintercept = l_thresh), color = "blue") + 
+  theme_classic() + ggtitle("Capsella bursa-pastoris depth filter - x-axis truncated")
 
 
 ############## Distribution of Missing Genotypes-----------
