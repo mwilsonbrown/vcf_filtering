@@ -13,38 +13,29 @@
 args = commandArgs(trailingOnly=TRUE)
 
 # load libs
-library(data.table)
-#library(ggplot2)
-#library(tidyr)
-#library(reshape2)
-#p_load(data.table,ggplot2, reshape2)
+#library(data.table)
 
 # read in .acount from plink2
-df<-fread(args[1])
-#df <- fread("~/Downloads/CBPCRCG.frqx")
+#df<-fread(args[1])
+df <- read.delim(args[1])
+
 df$TOTAL<-df$HOM_REF_CT+df$HET_REF_ALT_CTS+df$HOM_ALT1_CT #sum allele freq
 df$FRAC_HET<-df$HET_REF_ALT_CTS/df$TOTAL # calculate fractions
 df$FRAC_HOMREF<-df$HOM_REF_CT/df$TOTAL 
 df$FRAC_HOMALT<-df$HOM_ALT1_CT/df$TOTAL
 
-# read in sites from bcftools query
-#sites<-fread(args[2])
-#df1 <- fread("~/Downloads/CBPCRCG_sites.txt")
-#names(sites)<-c("CHR", "POS")
 
 # get allele frequency fractions
-#sub<-df[,c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT")]
-sub<-df[,c("#CHROM","POS","FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT")]
+sub<-df[,c("X.CHROM","POS","FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT")]
 
-# combine data and write out
-#sub<-as.data.frame(cbind(df1, sub))
+#write out
 out<-paste0(args[3], "_frqx.txt")
-fwrite(sub, out, quote=F, sep="\t")
-#write.table(sub, file = paste0(args[3], "_frqx.txt"), quote = F, sep = "\t", row.names = F, col.names = T)
+#fwrite(sub, out, quote=F, sep="\t")
+write.table(sub, file = out, quote = F, sep = "\t", row.names = F, col.names = T)
 
 # get rows with heterozygosity exceeding threshold set in arguments,
 # these individuals will get removed
-sub1<-sub[sub$FRAC_HET > as.numeric(args[2]),]
-out<-paste0(args[3], "_hetmin",".txt")
-fwrite(sub1, out, quote=F, sep="\t")
-#write.table(sub1, file = paste0(args[3], "_hetmin.txt"), quote = F, sep = "\t", row.names = F, col.names = T)
+sub1<-sub[which(sub$FRAC_HET > as.numeric(args[2])),]
+out1<-paste0(args[3], "_hetmin",".txt")
+#fwrite(sub1, out, quote=F, sep="\t")
+write.table(sub1, file = out1, quote = F, sep = "\t", row.names = F, col.names = T)
