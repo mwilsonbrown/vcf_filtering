@@ -17,7 +17,8 @@
 # Modified from C. Fiscus Capsella vcf filtering
 
 # Update directories to not run into space issues
-WORKDIR=/mnt/scratch/wils1582/july15
+WORKDIR=/mnt/scratch/wils1582/CBP_CRCGCONP_filtering
+
 
 # make sure working directory exists
 #mkdir -p "$WORKDIR"
@@ -32,9 +33,9 @@ module load BCFtools/1.18-GCC-12.3.0
 module load tabixpp/1.1.2-GCC-12.3.0
 
 ## Other vars
-PREFIX=CBP_CRCG
+PREFIX=CBP_CRCGCONP
 
 bcftools view -s ^SRR5803007.sam,ERR636135.sam "$WORKDIR"/"$PREFIX"_filter3.vcf.gz \
-	-Oz -o /mnt/home/wils1582/"$PREFIX"_filtered.vcf.gz
+	-Oz -o /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
 
-tabix /mnt/home/wils1582/"$PREFIX"_filtered.vcf.gz
+tabix /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
