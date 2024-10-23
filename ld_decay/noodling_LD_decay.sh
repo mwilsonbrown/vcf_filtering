@@ -26,7 +26,9 @@ module load PLINK/1.9b_6.21-x86_64
 ##### Global sample of cbp from variant only VCF
 VCF=/mnt/research/josephslab/Maya/CBP_CRCGCONP_filtered.vcf.gz
 # take the first field of the pop file (cbp names), and duplicate it via awk for PLINK
-POPFILE=$(cut -f1 /mnt/home/wils1582/capsella_population_structure/cbp_pop_str.txt | | awk -F '\t' '{print $1, $NF}')
+sed '1d' /mnt/home/wils1582/capsella_population_structure/cbp_pop_str.txt | cut -f1 | awk -F '\t' '{print $1, $NF}' > keep.txt
+# set as variable
+POPFILE=keep.txt
 PREFIX=var_cbp_JLv4_LD
 
 # Use PLINK to calculate r^2 between SNPs
