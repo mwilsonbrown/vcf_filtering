@@ -35,7 +35,17 @@ module load tabixpp/1.1.2-GCC-12.3.0
 ## Other vars
 PREFIX=CBP_CRCGCONP
 
+
 bcftools view -s ^SRR5803007.sam,ERR636135.sam "$WORKDIR"/"$PREFIX"_filter3.vcf.gz \
 	-Oz -o /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
 
 tabix /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
+
+# Make species group file
+cp ~/vcf_filtering/individuals/final_CBP_CRCGCONP_filtered_inds.txt ./
+
+
+
+# set group file Var ID
+## Filter VCF on species minor allele freq
+bcftools +split --groups-file $GROUPS

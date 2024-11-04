@@ -99,6 +99,53 @@ This seems to indicate there is rarely LD oover 0.1 at any distance, which is eq
 
 I also did not exclude SNPs in centromeric regions so it may be worth making a linkage map too.
 
+Another analysis, this time with the global sample of CBP and the variant only VCF
+```{r}
+# read in data
+ld_bins <- read.csv("~/Documents/PhD/Research/vcf_filtering/ld_decay/var_cbp_JLv4_LD_chrAll.ld_decay_bins",
+                    sep = "\t",
+                    header = T)
+
+
+# plot LD decay
+ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_hline(yintercept = 0.1, color = "red") +
+  facet_wrap(~chr) +
+  theme_bw()
+
+# which bins size before LD reaches backgound level of about 0.1
+ggplot(subset(ld_bins, avg_R2 <= 0.1), aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_vline(xintercept = 500000, color = "red") +
+  facet_wrap(~chr) +
+  theme_bw()
+
+ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_vline(xintercept = 250000, color = "red") +
+  geom_hline(yintercept = 0.1, color = "blue") +
+  facet_wrap(~chr) +
+  theme_bw()
+```
+250kb to get to a background LD of <0.2 (closer to about 0.1 which is the blue line plotted) is similar to *Arabidopsis thaliana*. On some chromosomes, there does seem to be long range LD starting at a distance of about 750kb, and I do believe **that** is due to introgression.
+
+Just to start looking at allele frequency.
+```{r}
+# I ran the following command with the same variables described in capsella_population_structure/runConditionalAdmixture.sh
+
+#plink2 --vcf $VCF --allow-extra-chr --keep $ALL_CBP --set-all-var-ids @:# --freq --out CBP_capsella
+
+afreq <- read.delim("~/Desktop/CBP_capsella.afreq")
+
+# Plot frquencies
+ggplot() + geom_histogram(data = afreq, aes(ALT_FREQS), binwidth = 0.02)
+
+# Plot frequencies ater filtering MAF > 0.05
+ggplot() + geom_histogram(data = subset(afreq, ALT_FREQS > 0.05 & ALT_FREQS < 0.95), aes(ALT_FREQS), binwidth = 0.02)
+```
+
+
 I can just document running ReLERNN here, for now.
 ```{bash, eval = F}
 # needs tensorflow and CUDA with CuDNN

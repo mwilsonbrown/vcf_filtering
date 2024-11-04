@@ -155,6 +155,6 @@ plink2 --vcf "$PREFIX"_filter3.vcf.gz \
         --out "$PREFIX"
 
 # make sure I still have invariant sites in the final vcf
-echo "Invariant sites"
+echo "Invariant sites" >> "$PREFIX"_log.txt
 echo $(bcftools query -f '%CHROM %POS ALT="."' "$PREFIX"_filter3.vcf.gz | wc -l) \
 	>> "$PREFIX"_log.txt
