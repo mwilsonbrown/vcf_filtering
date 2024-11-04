@@ -16,6 +16,5 @@ all <- all %>% mutate(sp_code = case_when(species %in% c("Capsella bursa-pastori
 
 cutted <- all[,c("V1", "col2", "sp_code")]
 
-write.table(cutted, file = "maf_Capsella_sppop_split.txt",
-            sep = "\t",
-            ``)
+write.table(cutted, file = "~/Documents/PhD/Research/vcf_filtering/individuals/maf_Capsella_sppop_split.txt",
+            sep = "\t", row.names = F, quote = F, col.names = F)

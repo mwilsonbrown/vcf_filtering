@@ -47,7 +47,7 @@ plink --vcf $VCF --double-id \
         --out $PREFIX
         
 # Then, calculate average LD in genomic bins; written in python 2 so need to activate that conda environment
-python ld_decay_cal.py -i "$PREFIX".ld.gz -o "$PREFIX"_chrAll
+python ld_decay_calc.py -i "$PREFIX".ld.gz -o "$PREFIX"_chrAll
 
 # 
 # 
