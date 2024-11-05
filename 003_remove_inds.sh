@@ -49,12 +49,21 @@ tabix /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
 # first, split the VCF into species groups
 bcftools +split --groups-file /mnt/home/wils1582/vcf_filtering/individuals/ \
   /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
+  
+# Then, have to recalculate the Allele count, Allele Frequency, and Allele Number on each separately
+# before filtering on MAF
+# Not filtering NP or C. orientalis because there are not that many samples
+# I could probably pipe the fill into the view command but it's fine
+bcftools +fill-tags CBP.vcf -Oz -o CBP_recalc.vcf.gz -- -t AC,AF,AN
+bcftools +fill-tags CR.vcf -Oz -o CR_recalc.vcf.gz -- -t AC,AF,AN
+bcftools +fill-tags CG.vcf -Oz -o CG_recalc.vcf.gz -- -t AC,AF,AN
 
-# then filter on MAF for each, only filtering Cbp for right now
+# Filter on MAF for each
 # C. grandiflora threshold higher bc outcrosser and eQTLs from EJ paper
-bcftools view --min-af 0.025:minor CBP.vcf -o CBP_maf.vcf.gz -Oz
-bcftools view --min-af 0.025:minor CR.vcf -o CR_maf.vcf.gz -Oz
-bcftools view --min-af 0.05:minor CG.vcf -o CG_maf.vcf.gz -Oz
+# Not filtering NP or C. orientalis because there are not that many samples
+bcftools view --min-af 0.025:minor CBP_recalc.vcf.gz -o CBP_maf.vcf.gz -Oz | tabix
+bcftools view --min-af 0.025:minor CR_recalc.vcf.gz -o CR_maf.vcf.gz -Oz | tabix
+bcftools view --min-af 0.05:minor CG_recalc.vcf.gz -o CG_maf.vcf.gz -Oz | tabix
 
 # bgzip the other two vcfs
 bgzip NP.vcf
@@ -66,6 +75,6 @@ tabix CR_maf.vcf.gz
 tabix CG_maf.vcf.gz 
 tabix CO.vcf.gz 
 tabix NP.vcf.gz
-# merge all the VCFs back together
-bcftools merge CBP_maf.vcf.gz CR_maf.vcf.gz CG_maf.vcf.gz CO.vcf.gz NP.vcf.gz -Oz -o CBP_CRCGCONP_maf_filtered.vcf.gz
+# merge all the VCFs back together; one final time, we recalculate the tags
+bcftools merge CBP_maf.vcf.gz CR_maf.vcf.gz CG_maf.vcf.gz CO.vcf.gz NP.vcf.gz -Ou | bcftools +fill-tags -Oz -o CBP_CRCGCONP_maf_final_filtered.vcf.gz -- -t AC,AF,AN
 

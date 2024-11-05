@@ -130,6 +130,37 @@ ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
 ```
 250kb to get to a background LD of <0.2 (closer to about 0.1 which is the blue line plotted) is similar to *Arabidopsis thaliana*. On some chromosomes, there does seem to be long range LD starting at a distance of about 750kb, and I do believe **that** is due to introgression.
 
+For some reason, I lose a LOT of variants during the admixtyure analysis so I am checking LD once again but usuing the VCF I generated after filtering for minor allele frquency in the species separately, and remove the flags for maf, geno and mind.
+```{r}
+# read in data
+ld_bins <- read.csv("~/Documents/PhD/Research/vcf_filtering/ld_decay/var_cbp_JLv4_LD_maf_chrAll.ld_decay_bins",
+                    sep = "\t",
+                    header = T)
+
+
+# plot LD decay
+ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_hline(yintercept = 0.1, color = "red") +
+  facet_wrap(~chr) +
+  theme_bw()
+
+# which bins size before LD reaches backgound level of about 0.1
+ggplot(subset(ld_bins, avg_R2 <= 0.1), aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_vline(xintercept = 500000, color = "red") +
+  facet_wrap(~chr) +
+  theme_bw()
+
+ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
+  xlab("Distance (bp)") + ylab(expression(italic(r)^2)) +
+  geom_vline(xintercept = 250000, color = "red") +
+  geom_hline(yintercept = 0.1, color = "blue") +
+  facet_wrap(~chr) +
+  theme_bw()
+```
+Oh, okay :) Yeah, that is why.
+
 Just to start looking at allele frequency.
 ```{r}
 # I ran the following command with the same variables described in capsella_population_structure/runConditionalAdmixture.sh
