@@ -50,6 +50,39 @@ tabix /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
 bcftools +split --groups-file /mnt/home/wils1582/vcf_filtering/individuals/ \
   /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
   
+# Splitting the VCF by species introduces invariant sites
+# In R
+# Read in allele frquency file caluculated with PLINK
+cbp_frq <- read.delim("./CBP_split.afreq")
+# Only select variant sites (neither the reference nor alternate allele had a frequency of 1)
+cbp_var <- cbp_frq[which(cbp_frq$REF_FREQ != 1 & cbp_frq$ALT_FREQ !=1),]
+# of the variant sites, make a list of those where either the reference or alternate allele frequecy is below the threshold
+cbp_rm <- cbp_var[which(cbp_var$REF_FREQ < 0.025 | cbp_var$ALT_FREQ < 0.025),]
+
+# do the same for Capsella rubella
+cr_frq <- read.delim("./CR_split.afreq")
+# Only select variant sites (neither the reference nor alternate allele had a frequency of 1)
+cr_var <- cr_frq[which(cr_frq$REF_FREQ != 1 & cr_frq$ALT_FREQ !=1),]
+# of the variant sites, make a list of those where either the reference or alternate allele frequecy is below the threshold
+cr_rm <- cr_var[which(cr_var$REF_FREQ < 0.025 | cr_var$ALT_FREQ < 0.025),]
+
+# and the same for Capsella grandiflora but the MAF cut off is more stringent (0.05)
+cg_frq <- read.delim("./CG_split.afreq")
+# Only select variant sites (neither the reference nor alternate allele had a frequency of 1)
+cg_var <- cg_frq[which(cg_frq$REF_FREQ != 1 & cg_frq$ALT_FREQ !=1),]
+# of the variant sites, make a list of those where either the reference or alternate allele frequecy is below the threshold
+cg_rm <- cg_var[which(cg_var$REF_FREQ < 0.05 | cg_var$ALT_FREQ < 0.05),]
+
+# concatenate all removals together
+rm_sites <- rbind(cbp_rm[1:3], cr_rm[1:3], cg_rm[1:3])
+
+# remove the duplicates
+rm_sites_nodups <- rm_sites[!duplicated(rm_sites),]
+
+# Write to file
+write.table(rm_sites_nodups[1:2], file = "remove_MAF.txt", sep = "\t", header = F, quote = F, row.names = F, col.names = F)
+
+  
 # Then, have to recalculate the Allele count, Allele Frequency, and Allele Number on each separately
 # before filtering on MAF
 # Not filtering NP or C. orientalis because there are not that many samples
@@ -59,11 +92,20 @@ bcftools +fill-tags CR.vcf -Oz -o CR_recalc.vcf.gz -- -t AC,AF,AN
 bcftools +fill-tags CG.vcf -Oz -o CG_recalc.vcf.gz -- -t AC,AF,AN
 
 # Filter on MAF for each
+# The definition of AC and AF in BCFTools is for the alternate allele only
+# I only want to filter on Minor Allele Frequecy on sites where there is a minor allele at all
+
+# I cannot figure out how to fix this right now so I think I am just going to use PLINK2
+plink2 --vcf CBP.vcf \
+--freq cols=chrom,pos,id,ref,alt,reffreq,altfreq,nobs \
+--set-all-var-ids @:# \
+--allow-extra-chr \
+--out CBP_split
 # C. grandiflora threshold higher bc outcrosser and eQTLs from EJ paper
 # Not filtering NP or C. orientalis because there are not that many samples
-bcftools view --min-af 0.025:minor CBP_recalc.vcf.gz -o CBP_maf.vcf.gz -Oz | tabix
-bcftools view --min-af 0.025:minor CR_recalc.vcf.gz -o CR_maf.vcf.gz -Oz | tabix
-bcftools view --min-af 0.05:minor CG_recalc.vcf.gz -o CG_maf.vcf.gz -Oz | tabix
+bcftools view --min-af 0.025:minor CBP_recalc.vcf.gz -o CBP_maf.vcf.gz -Oz
+bcftools view --min-af 0.025:minor CR_recalc.vcf.gz -o CR_maf.vcf.gz -Oz
+bcftools view --min-af 0.05:minor CG_recalc.vcf.gz -o CG_maf.vcf.gz -Oz
 
 # bgzip the other two vcfs
 bgzip NP.vcf
