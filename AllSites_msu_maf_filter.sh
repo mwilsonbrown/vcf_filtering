@@ -55,12 +55,17 @@ bcftools view -e 'MAF < 0.01' cbp_allsites_variant.bcf -Ou | bcftools sort - -Ou
 echo "Variant sites after MAF filter" >> "$PREFIX"_log.txt
 bcftools query -f '%CHROM\t%POS\n' cbp_allsites_variant_maf_filt.bcf | wc -l >> "$PREFIX"_log.txt
 
+# tabix index both intermediate files
+tabix cbp_allsites_variant_maf_filt.bcf
+tabix cbp_allsites_invariant_ref_miss.bcf
+
 # merge the invariant and variant sites
-bcftools concat --allow-overlaps --write-index \
+bcftools concat --allow-overlaps --write-index=tbi \
   cbp_allsites_variant_maf_filt.bcf cbp_allsites_invariant_ref_miss.bcf \
   -Oz -o "$PREFIX".vcf.gz 
 
 # check total number of sites after concatenating
+echo "Final site count"
 bcftools query -f '%CHROM\t%POS\n' "$PREFIX".vcf.gz | wc -l >> "$PREFIX"_log.txt
 
 
