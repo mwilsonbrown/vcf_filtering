@@ -130,7 +130,7 @@ ggplot(ld_bins, aes(distance, avg_R2), colour = chr) + geom_line() +
 ```
 250kb to get to a background LD of <0.2 (closer to about 0.1 which is the blue line plotted) is similar to *Arabidopsis thaliana*. On some chromosomes, there does seem to be long range LD starting at a distance of about 750kb, and I do believe **that** is due to introgression.
 
-For some reason, I lose a LOT of variants during the admixtyure analysis so I am checking LD once again but usuing the VCF I generated after filtering for minor allele frquency in the species separately, and remove the flags for maf, geno and mind.
+For some reason, I lose a LOT of variants during the admixture analysis so I am checking LD once again but usuing the VCF I generated after filtering for minor allele frquency in the species separately, and remove the flags for maf, geno and mind.
 ```{r}
 # read in data
 ld_bins <- read.csv("~/Documents/PhD/Research/vcf_filtering/ld_decay/var_cbp_JLv4_LD_maf_chrAll.ld_decay_bins",
