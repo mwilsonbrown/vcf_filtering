@@ -4,7 +4,7 @@
 #SBATCH --nodes=10
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=0-8:00:00
+#SBATCH --time=0-2:00:00
 #SBATCH --partition=josephsnodes
 #SBATCH --account=josephsnodes
 #SBATCH --export=NONE
