@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=MissingDepthAllSites
+#SBATCH --job-name=AllSites_noMissFilt
 #SBATCH --nodes=10
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
@@ -11,9 +11,9 @@
 #SBATCH --mem-per-cpu=8G
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=wils1582@msu.edu
-#SBATCH --output=/mnt/scratch/wils1582/slurm/slurm-%A_%a.out
+#SBATCH --output=/mnt/scratch/wils1582/slurm/slurm-%A.out
 # VCF filtering
-# October 16, 2024
+# November 12, 2024
 # Maya Wilson Brown
 #
 #
@@ -21,11 +21,11 @@
 # 2) update software with new OS and newer versions (no VCFtools)
 #
 # make sure the working directory exists
-#mkdir -p /mnt/scratch/wils1582/allSites_msu_filtering/
+#mkdir -p /mnt/scratch/wils1582/allSites_msu_filtering_2/
 
 #
 # change directory
-cd /mnt/scratch/wils1582/allSites_msu_filtering/
+cd /mnt/scratch/wils1582/allSites_msu_filtering_2/
 
 # purge modules
 module purge
@@ -39,45 +39,45 @@ RAW_VCF=/mnt/research/josephslab/Adrian/CBP_NYC_JLv4/CBP_JLv4_v_CBP.msu.merged.v
 FILEDIR=/mnt/home/wils1582/vcf_filtering
 PREFIX=CBP_AllSites_msu
 
-####### SETUP
-## I do not have read write permissons for my github repo in home\
-## so I will copy needed files to the working directory
-cp "$FILEDIR"/individuals/* ./
-cp "$FILEDIR"/*.R ./
-#
-##### PIPELINE #####
-### GATK best practices hard filters
-#bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
-#	"$RAW_VCF" \
-#	> "$PREFIX"_temp.vcf
-#bcftools view -f.,PASS "$PREFIX"_temp.vcf \
-#	-Oz -o "$PREFIX"_filter1.vcf.gz
-#
-#echo "Filter1 complete"
-#
+# ####### SETUP
+# ## I do not have read write permissons for my github repo in home\
+# ## so I will copy needed files to the working directory
+# cp "$FILEDIR"/individuals/* ./
+# cp "$FILEDIR"/*.R ./
+# #
+# ##### PIPELINE #####
+# ### GATK best practices hard filters
+# #bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
+# #	"$RAW_VCF" \
+# #	> "$PREFIX"_temp.vcf
+# #bcftools view -f.,PASS "$PREFIX"_temp.vcf \
+# #	-Oz -o "$PREFIX"_filter1.vcf.gz
+# #
+# #echo "Filter1 complete"
+# #
 # start fitering report
 touch "$PREFIX"_log.txt
-
-echo "$PREFIX" >> "$PREFIX"_log.txt
-echo "GATK best practices filter" >> "$PREFIX"_log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
-	>> "$PREFIX"_log.txt
-echo "Sample count" >> "$PREFIX"_log.txt
-echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
-	>> "$PREFIX"_log.txt
-
-## remove temp
-#rm "$PREFIX"_temp.vcf
-#
-### require 3 reads to call and keep only biallelic sites;  DO NOT remove entirely missing sites
-#bcftools filter -e'FMT/DP<3' -S . "$PREFIX"_filter1.vcf.gz | bcftools view -m2 -M2 -Oz -o "$PREFIX"_temp2.vcf
-#
-## log progress
-#echo "temp2 complete"
-#
-echo "3 reads called and biallelic sites" >> "$PREFIX"_log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
-	>> "$PREFIX"_log.txt
+# 
+# echo "$PREFIX" >> "$PREFIX"_log.txt
+# echo "GATK best practices filter" >> "$PREFIX"_log.txt
+# echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
+# 	>> "$PREFIX"_log.txt
+# echo "Sample count" >> "$PREFIX"_log.txt
+# echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
+# 	>> "$PREFIX"_log.txt
+# 
+# ## remove temp
+# #rm "$PREFIX"_temp.vcf
+# #
+# ### require 3 reads to call and keep only biallelic sites;  DO NOT remove entirely missing sites
+# #bcftools filter -e'FMT/DP<3' -S . "$PREFIX"_filter1.vcf.gz | bcftools view -m2 -M2 -Oz -o "$PREFIX"_temp2.vcf
+# #
+# ## log progress
+# #echo "temp2 complete"
+# #
+# echo "3 reads called and biallelic sites" >> "$PREFIX"_log.txt
+# echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
+# 	>> "$PREFIX"_log.txt
 #
 ###########
 ## filter sites with > 5% het & > 5% missing data
@@ -109,25 +109,10 @@ echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
 #echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp3.vcf | wc -l) \
 #	>> "$PREFIX"_log.txt
 #
-## calculate site missingness
-#plink2 --vcf "$PREFIX"_temp3.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
-#  --allow-extra-chr \
-#  --double-id \
-#  --out "$PREFIX"
-
-# Keep sites where at least 95% is not missing; there are still sites that are invariant and fall below this missing threshold so do not worry
-bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
-
-echo "missing data filter complete"
-
-echo "missing site call filter" >> "$PREFIX"_log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter2.vcf.gz | wc -l) \
-	>> "$PREFIX"_log.txt
-
 ##########
 # top cut depth at value of > Q3 + 1.5IQR
 ## calculate depth per site and plot
-bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_filter2.vcf.gz \
+bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_temp3.vcf.gz \
 	> depth.txt
 Rscript 007b_depth_thresh.R depth.txt "$PREFIX"
 
@@ -137,7 +122,7 @@ echo "depth calc complete"
 MAXDP=$(head -n1 "$PREFIX"_depth_cutval.txt)
 MINDP=$(tail -n1 "$PREFIX"_depth_cutval.txt)
 
-bcftools view -i "INFO/DP < "$MAXDP" & INFO/DP > "$MINDP"" "$PREFIX"_filter2.vcf.gz \
+bcftools view -i "INFO/DP < "$MAXDP" & INFO/DP > "$MINDP"" "$PREFIX"_temp3.vcf.gz \
 	-Oz -o "$PREFIX"_filter3.vcf.gz
 
 ## Write to filtering report
