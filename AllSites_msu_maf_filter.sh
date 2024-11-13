@@ -19,10 +19,10 @@
 #
 #
 # change directory
-cd /mnt/scratch/wils1582/allSites_msu_filtering/
+cd /mnt/scratch/wils1582/allSites_msu_filtering_2/
 
 ### Varibles
-VCF=/mnt/research/josephslab/Maya/CBP_AllSites_msu_qual_filtered.vcf.gz
+VCF=/mnt/scratch/wils1582/allSites_msu_filtering_2/CBP_AllSites_msu_filter3.vcf.gz
 PREFIX=CBP_AllSites_msu_maf
 
 
