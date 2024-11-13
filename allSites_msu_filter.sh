@@ -112,7 +112,7 @@ touch "$PREFIX"_log.txt
 ##########
 # top cut depth at value of > Q3 + 1.5IQR
 ## calculate depth per site and plot
-bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_temp3.vcf.gz \
+bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_temp3.vcf \
 	> depth.txt
 Rscript 007b_depth_thresh.R depth.txt "$PREFIX"
 
@@ -122,7 +122,7 @@ echo "depth calc complete"
 MAXDP=$(head -n1 "$PREFIX"_depth_cutval.txt)
 MINDP=$(tail -n1 "$PREFIX"_depth_cutval.txt)
 
-bcftools view -i "INFO/DP < "$MAXDP" & INFO/DP > "$MINDP"" "$PREFIX"_temp3.vcf.gz \
+bcftools view -i "INFO/DP < "$MAXDP" & INFO/DP > "$MINDP"" "$PREFIX"_temp3.vcf \
 	-Oz -o "$PREFIX"_filter3.vcf.gz
 
 ## Write to filtering report
