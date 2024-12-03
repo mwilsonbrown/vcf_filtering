@@ -1,0 +1,64 @@
+---
+title: "Recombination noodling"
+author: "Maya Wilson Brown"
+date: "2024-12-03"
+output: html_document
+---
+
+recombination noodling
+
+### Installation and running ReLERNN
+Loosely following these instructions: https://docs.icer.msu.edu/Installing_TensorFlow_using_anaconda/#installing-tf-in-a-conda-environment
+
+I decided not to use any of the HPCC preloaded modules and use CuDNN and nvidia installed in a new conda environment.
+```{bash}
+# create the conda environment called relernn with a reasonable version of python
+conda create -n relernn python==3.9
+conda activate relernn #activate conda environment
+
+conda install -c conda-forge cudnn=8.1.0 --yes #install cudnn
+conda install -c nvidia cuda-nvcc --yes #install nvidia
+
+# set the library path
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA_PREFIX/lib/
+
+# use pip to install tensorflow
+pip3 install tensorflow==2.11.0
+pip3 install nvidia-pyindex
+pip3 install nvidia-tensorrt==8.4.3.1 #8.0 comes with libnvinfer8 instead of 7 so need to create symlink later
+
+#check version of numpy; it needs to be less than 2.0 and this is usually the problem
+python3 -c "import numpy; print(numpy.__version__)"
+
+# if too recent, uninstall and install a compatible version of numpy
+pip3 uninstall numpy
+pip3 install numpy==1.26.4
+```
+When testing, I get an error so I have to make a symlink
+```{bash}
+# To fix the error of "Could not load dynamic library 'libnvinfer.so.7'". The trick is to create a symlink.
+cd $CONDA_PREFIX/lib/python3.9/site-packages/tensorrt/
+ln -s libnvinfer.so.8 libnvinfer.so.7
+ln -s libnvinfer_plugin.so.8 libnvinfer_plugin.so.7
+
+# To fix the error of "Can't find libdevice directory ${CUDA_DIR}/nvvm/libdevice." 
+mkdir -p $CONDA_PREFIX/lib/nvvm/libdevice #generate the directory
+cp $CONDA_PREFIX/lib/libdevice.10.bc $CONDA_PREFIX/lib/nvvm/libdevice #copy libdevice to directory where it's looking for CUDA libdevice
+```
+Finally, I can install ReLERNN usuing pip
+```{bash}
+git clone https://github.com/kr-colab/ReLERNN.git
+cd ReLERNN
+pip3 install .
+```
+
+The HPCC instructions say I have to reset my paths each time I want to use tensorflow/ReLERNN
+```{bash}
+export PATH=/mnt/home/wils1582/miniconda3/bin:$PATH
+conda activate relernn
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/lib/:/lib64/:$CONDA_PREFIX/lib/:$CONDA_PREFIX/lib/python3.9/site-packages/tensorrt
+export XLA_FLAGS=--xla_gpu_cuda_data_dir=$CONDA_PREFIX/lib
+
+```
+Installing TensorFlow while on dev-amd20-v100 will restrict you to amd20 nodes with GPUs. You must specify amd20 as a constraint when submitting a batch job or starting an OnDemand session.

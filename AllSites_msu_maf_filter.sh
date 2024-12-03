@@ -60,7 +60,7 @@ tabix cbp_allsites_variant_maf_filt.bcf
 tabix cbp_allsites_invariant_ref_miss.bcf
 
 # merge the invariant and variant sites
-bcftools concat --allow-overlaps --write-index=tbi \
+bcftools concat --allow-overlaps \
   cbp_allsites_variant_maf_filt.bcf cbp_allsites_invariant_ref_miss.bcf \
   -Oz -o "$PREFIX".vcf.gz 
 
