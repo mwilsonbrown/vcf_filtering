@@ -36,6 +36,8 @@ p1<-ggplot(long, aes(x=value, color=measure), alpha=0.5) +
   geom_density() +
   theme_classic() +
   theme(legend.position="top")
+
+p2<- ggplot() + geom_histogram()
 #out<-paste0(args[3], "_frqx.jpeg")
 out<-paste0(filedir,prefix, "_frqx.jpeg")
 ggsave(out, p1, height=3, width=5)
@@ -46,23 +48,30 @@ after_filt <- het_frq[het_frq$FRAC_HET < 0.05,]
 long2<- tidyr::pivot_longer(after_filt, cols = c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT"), names_to = "measure")
 
 # plotdis
-p2<-ggplot(long2, aes(x=value, color=measure), alpha=0.5) +
+p3<-ggplot(long2, aes(x=value, color=measure), alpha=0.5) +
   geom_density() +
   theme_classic() +
   theme(legend.position="top")
 #out<-paste0(args[3], "_frqx.jpeg")
 out<-paste0(filedir,prefix, "_frqx2.jpeg")
-ggsave(out, p2, height=3, width=5)
+ggsave(out, p3, height=3, width=5)
 
 ############# plot depth----------------
+df <- read.delim("~//Documents/PhD/Research/vcf_filtering/large_files/depth.txt",
+                      header = F, sep = " ")
 
-p2 <- ggplot() + geom_density(data = cbp_msu, aes(x=V3)) +
-  xlim(0,7000) + geom_vline(aes(xintercept = thres_cbp), color="red") + 
-  geom_vline(aes(xintercept = l_thresh), color = "blue") + 
-  theme_classic() + ggtitle("Capsella bursa-pastoris depth filter - x-axis truncated")
+df$V3 <- as.numeric(df$V3)
+thresh <- c(quantile(df$V3, na.rm = TRUE)[4] + 1.5*IQR(df$V3, na.rm = TRUE), quantile(df$V3, na.rm = TRUE)[2] - 1.5*IQR(df$V3, na.rm = TRUE))
+
+dp <- ggplot() + geom_density(data = df, aes(x=V3)) +
+  xlim(0,7000) + geom_vline(aes(xintercept = thresh[1]), color="red") + 
+  geom_vline(aes(xintercept = thresh[2]), color = "blue") + 
+  theme_classic() + xlab("depth") + ggtitle("Capsella bursa-pastoris depth filter - x-axis truncated")
 
 
 ############## Distribution of Missing Genotypes-----------
+prefix <- "CBP_variant_msu"
+
 # load data for site missingness
 vmiss <- read.csv(paste0(filedir, prefix, ".vmiss"), 
                    sep = "\t", header = T)
@@ -71,11 +80,11 @@ vmiss_filt <- vmiss[which(vmiss$F_MISS < 0.05),]
 
 #plot missing-ness by scaffold
 vmiss_p1 <- ggplot() + geom_boxplot(data = vmiss, aes(x=X.CHROM, y = F_MISS))
-ggsave(paste0(filedir, prefix, "missing_variants.jpeg"), vmiss_p1, height=4, width=6)
+ggsave(paste0(filedir, prefix, "missing_variants.jpeg"), vmiss_p1, height=4, width=10)
 
 # same plot but after filtering
 vmiss_p2 <- ggplot() + geom_boxplot(data = vmiss_filt, aes(x=X.CHROM, y = F_MISS))
-ggsave(paste0(filedir, prefix, "missing_variants_filt.jpeg"), vmiss_p2, height=4, width=6)
+ggsave(paste0(filedir, prefix, "missing_variants_filt.jpeg"), vmiss_p2, height=4, width=10)
 
 ######## Individuals by heterozygosity--------
 scount <- read.delim(paste0(filedir, prefix, ".scount"))
@@ -94,9 +103,9 @@ scount$X.IID<-factor(scount$X.IID, levels=scount$X.IID)
 # plot
 p1<-ggplot(scount, aes(x=X.IID, y=prop_het, fill = species)) + geom_bar(stat="identity") +
   theme_bw() + coord_flip() +
-  theme(axis.text.x= element_text(size = 0.5))
+  theme(axis.text.x= element_text(size = 7))
 
-ggsave(paste0(filedir, prefix, "_het.jpeg"), p1, height=20, width=8)
+ggsave(paste0(filedir, prefix, "_het.jpeg"), p1, height=22, width=8)
 
 # Based on the figure, I would remove the highly heterozygous C. rubella sample,
 # and the fairly heterozygous C. bursa-pastoris sample that is in between C. grandiflora samples
