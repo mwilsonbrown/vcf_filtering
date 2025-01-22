@@ -4,7 +4,7 @@
 #SBATCH --nodes=10
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=0-2:00:00
+#SBATCH --time=1-18:00:00
 #SBATCH --partition=josephsnodes
 #SBATCH --account=josephsnodes
 #SBATCH --export=NONE
@@ -27,9 +27,9 @@ module load PLINK/2.00a3.7-gfbf-2023a
 module load R/4.3.2-gfbf-2023a
 
 ## Other vars
-PREFIX=allSites_CBP_msu
+PREFIX=CBP_allSites_msu
 VCF=/mnt/research/josephslab/Adrian/CBP_NYC_JLv4/CBP_JLv4_v_CBP.msu.merged.v.all.vcf
-WORKDIR=/mnt/scratch/wils1582
+WORKDIR=/mnt/scratch/wils1582/allSites_msu_filtering
 INFILES=/mnt/home/wils1582/vcf_filtering
 
 # In the case that I do not have execute permissions for my own github repo
@@ -40,15 +40,16 @@ cp "$INFILES"/individuals/*.txt "$WORKDIR"
 cd "$WORKDIR"
 #### PIPELINE #####
 ### GATK best practices hard filters
+# Mark sites
 bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
-"$VCF" \
-> "$PREFIX"_temp.vcf
-bcftools view -f.,PASS "$PREFIX"_temp.vcf \
--Oz -o "$PREFIX"_filter1.vcf.gz
+"$VCF" > "$PREFIX"_temp.vcf
+
+#filter sites that PASS
+bcftools view -f.,PASS "$PREFIX"_temp.vcf -Oz -o "$PREFIX"_filter1.vcf.gz
 
 echo "Filter1 complete"
 
-## start fitering report
+## start filtering report
 touch "$WORKDIR"/"$PREFIX"_log.txt
 
 echo "$PREFIX" >> "$WORKDIR"/"$PREFIX"_log.txt
@@ -59,57 +60,42 @@ echo "Sample count" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
 >> "$WORKDIR"/"$PREFIX"_log.txt
 
-## require 3 reads to call and keep only biallelic sites; dump entirely missing sites
-bcftools filter -e'FMT/DP<3' -S . "$PREFIX"_filter1.vcf.gz | bcftools view -i 'F_MISSING<1' -m2 -M2 -Oz -o "$PREFIX"_temp2.vcf
+## require 3 reads to call and dump sites with more than 10% missing calls
+bcftools filter -e'FMT/DP<3' -S . "$PREFIX"_filter1.vcf.gz -Ou| bcftools view -i 'F_MISSING<0.1' -M2 -Oz -o "$PREFIX"_temp2.vcf
 
 # log progress
 echo "temp2 complete"
 
-echo "3 reads called and biallelic sites" >> "$WORKDIR"/"$PREFIX"_log.txt
+echo "3 reads called and missing sites" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
 >> "$WORKDIR"/"$PREFIX"_log.txt
 
-########### filter sites with > 5% het & > 5% missing data
-## calculate proportion het per site with plink
-plink2 --vcf "$PREFIX"_temp2.vcf \
---geno-counts cols=chrom,pos,ref,alt,homref,refalt,homalt1 \
---allow-extra-chr \
---double-id \
---out "$PREFIX"
-
-echo "plink genotype caluclation complete"
-#
 # Most invariant sites are heterozygous calls so we do not filter those sites out
 
-# calculate site missingness
-plink2 --vcf "$PREFIX"_temp2.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
-  --allow-extra-chr \
-  --double-id \
-  --out "$PREFIX"
+# calculate site missingness and genotype counts
+plink2 --vcf "$PREFIX"_temp2.vcf \
+	--missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
+	--geno-counts cols=chrom,pos,ref,alt,homref,refalt,homalt1 \
+	--allow-extra-chr \
+	--double-id \
+	--out "$PREFIX"
 
-# Keep sites where at least 95% is not missing
-bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp2.vcf -Oz -o "$PREFIX"_filter2.vcf.gz
-
-echo "missing data filter complete"
-
-echo "missing site call filter" >> "$WORKDIR"/"$PREFIX"_log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter2.vcf.gz | wc -l) \
-	>> "$WORKDIR"/"$PREFIX"_log.txt
+echo "PLINK calculations complete"
 
 ##########
-# top cut depth at value of > Q3 + 1.5IQR
-## calculate depth per site and plot
-bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_filter2.vcf.gz \
+# top cut depth at value of > Q3 + 1.5IQR; calculate depth per site and plot
+bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_temp2.vcf \
 	> "$WORKDIR"/depth.txt
-#Rscript "$WORKDIR"/007b_depth_thresh.R "$WORKDIR"/depth.txt "$WORKDIR"/"$PREFIX"
+
 Rscript 007b_depth_thresh.R "$WORKDIR"/depth.txt "$WORKDIR"/"$PREFIX"
 
 echo "depth calc complete"
 
 ## filter on depth
-MAXDP=$(head -n1 "$WORKDIR"/"$PREFIX"_depth_cutval.txt)
+MAXDP=$(head -n1 "$PREFIX"_depth_cutval.txt)
+MINDP=$(tail -n1 "$PREFIX"_depth_cutval.txt)
 
-bcftools view -i "INFO/DP < $MAXDP" "$PREFIX"_filter2.vcf.gz \
+bcftools view -i "INFO/DP < "$MAXDP" & INFO/DP > "$MINDP"" "$PREFIX"_temp2.vcf \
 	-Oz -o "$PREFIX"_filter3.vcf.gz
 
 ## Write to filtering report
@@ -131,8 +117,8 @@ plink2 --vcf "$PREFIX"_filter3.vcf.gz \
 cd /mnt/scratch/wils1582/allSites_msu_filtering_2/
 
 ### Varibles
-VCF=/mnt/scratch/wils1582/allSites_msu_filtering_2/CBP_AllSites_msu_filter3.vcf.gz
-PREFIX=CBP_AllSites_msu_maf
+VCF="$WORKDIR"/"$PREFIX"_filter3.vcf.gz #previous prefix
+PREFIX=CBP_allSites_msu_maf #new prefix
 
 # purge modules
 module purge
