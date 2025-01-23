@@ -41,7 +41,7 @@ cd "$WORKDIR"
 #### PIPELINE #####
 ### GATK best practices hard filters
 # Mark sites
-bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
+bcftools filter -e 'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
 "$VCF" > "$PREFIX"_temp.vcf
 
 #filter sites that PASS
@@ -60,8 +60,9 @@ echo "Sample count" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
 >> "$WORKDIR"/"$PREFIX"_log.txt
 
-## require 3 reads to call and dump sites with more than 10% missing calls
-bcftools filter -e'FMT/DP<3' -S . "$PREFIX"_filter1.vcf.gz -Ou| bcftools view -i 'F_MISSING<0.1' -M2 -Oz -o "$PREFIX"_temp2.vcf
+## require 3 reads to call and Quality over 20, hard filter; set genotypes that do not pass to missing;
+## then, dump sites with more than 10% missing calls
+bcftools filter -e 'QUAL<20 || FMT/DP<3' --set-GTs . "$PREFIX"_filter1.vcf.gz -Ou| bcftools view -i 'F_MISSING<0.1' -M2 -Oz -o "$PREFIX"_temp2.vcf
 
 # log progress
 echo "temp2 complete"
