@@ -17,7 +17,7 @@
 # Maya Wilson Brown
 #
 # Updated Goal: combine the whole VCF filtering procedure into a single script
-# Successfully generated filtered VCF but script is untested as singal runthrough
+# Successfully generated filtered VCF but script is untested as single runthrough
 # as of Jan 31, 2025
 #
 ######################## SETUP
@@ -60,7 +60,7 @@ echo "Sample count" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
 >> "$WORKDIR"/"$PREFIX"_log.txt
 
-# setting regions may require tabix index of vcf
+# setting regions in next step may require tabix index of vcf
 tabix "$PREFIX"_filter1.vcf.gz
 
 ## require 3 reads to call and Quality over 20, hard filter; set genotypes that do not pass to missing;
@@ -74,8 +74,6 @@ echo "temp2 complete"
 echo "3 reads called and missing sites" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
 >> "$WORKDIR"/"$PREFIX"_log.txt
-
-# Most invariant sites are heterozygous calls so we do not filter those sites out
 
 ##########
 # top cut depth at value of > Q3 + 1.5IQR; calculate depth per site and plot
@@ -91,8 +89,7 @@ bgzip "$PREFIX"_temp2.vcf
 MAXDP=$(head -n1 "$PREFIX"_depth_cutval.txt)
 MINDP=$(tail -n1 "$PREFIX"_depth_cutval.txt)
 
-bcftools view -i "INFO/DP < "$MAXDP" & INFO/DP > "$MINDP"" -r jlSCF_1,jlSCF_2,jlSCF_3,jlSCF_4,jlSCF_5,jlSCF_6,jlSCF_7,jlSCF_8,jlSCF_9,jlSCF_10,jlSCF_11,jlSCF_12,jlSCF_13,jlSCF_14,jlSCF_15,jlSCF_16 "$PREFIX"_temp2.vcf.gz \
-	-Oz -o "$PREFIX"_filter3.vcf.gz
+bcftools view -i "INFO/DP < "$MAXDP" & INFO/DP > "$MINDP"" "$PREFIX"_temp2.vcf  -Oz -o "$PREFIX"_filter3.vcf.gz
 
 ## Write to filtering report
 echo "Depth filter complete"
@@ -108,9 +105,9 @@ plink2 --vcf "$PREFIX"_filter3.vcf.gz \
         --double-id \
         --out "$PREFIX"
 
-bcftools view -e 'QUAL="."' CBP_allSites_msu_filter3.vcf.gz -Ou -o "$PREFIX"_filter4.vcf
+# remove sites with no quality information
+bcftools view -e 'QUAL="."' "$PREFIX"_filter3.vcf.gz -Ou -o "$PREFIX"_filter4.vcf
 
-echo "N0 Quality info filter"
 echo "has quality info filter " >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter4.vcf | wc -l) \
        >> "$WORKDIR"/"$PREFIX"_log.txt
