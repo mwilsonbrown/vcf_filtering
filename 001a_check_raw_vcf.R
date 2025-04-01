@@ -3,12 +3,13 @@
 
 # Reads in VCF metadata and generates different individual files for VCF processing such as a list of outcrossing individuals that will not be filtered by heterozygosity
 
-# arg[1] is the variant only vcf
-# arg[2] is the VCF prefix
+# args[1] is the variant only vcf
+# args[2] is the VCF prefix
+# args[3] is the output directory
 args <- commandArgs(trailingOnly=TRUE)
 
 # get ourput directory from environment
-outdir <- Sys.getenv("OUTDIR")
+outdir <- args[3]
 
 ##################### Variant only sites VCF
 # read in vcf metadata
@@ -48,18 +49,18 @@ cbp <- cbp[str_detect(cbp$sample_name, "parent", negate = T),]
 rm <- cbp_all %>% anti_join(cbp)
 
 # write removal list to file
-write(rm$V1,
+write.table(rm$V1,
             paste(outdir, "removeCBP_vcf.txt", sep = "/"), 
-            sep = "\t")
+            sep = "\t", row.names = F, col.names = F, quote = F)
 
 # write C. grandiflora and Neslia paniculata to file so they are not removed during heterozygosity step
-write(cg$V1, 
+write.table(cg$V1, 
             paste(outdir, "CgNp.txt", sep = "/"), 
-            sep = "\t")
+            sep = "\t", row.names=F, col.names = F, quote = F)
 
 # write name_change file for BCF tools
 namefile <- paste0(args[2],"_new_names.txt")
 
 write.table(dat[1:2], 
       file= paste(outdir, namefile, sep = "/"), 
-      sep = "\t", row.names = F, col.names = F)
+      sep = "\t", row.names = F, col.names = F,, quote = F)

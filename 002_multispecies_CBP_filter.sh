@@ -121,7 +121,7 @@ echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp4.vcf.gz | wc -l) \
 ## calculate depth per site and plot
 bcftools query -f '%CHROM %POS %DP\n' "$PREFIX"_temp4.vcf.gz \
 	> "$PREFIX"_depth.txt
-Rscript 007b_depth_thresh.R "$PREFIX"_depth.txt "$PREFIX"
+Rscript 002b_depth_thresh.R "$PREFIX"_depth.txt "$PREFIX"
 
 echo "depth calc complete"
 
