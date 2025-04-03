@@ -12,7 +12,7 @@ filedir <- "~/Documents/PhD/Research/vcf_filtering/large_files/"
 #### LIBBABIES----
 library(dplyr)
 library(ggplot2)
-############ Genotype filtering of highly heterozygous sites-------
+############ SELFING SPECIES VARIANT HETEROZYGOSITY --------
 # Result from 007a_het_sites.R
 # <PREFIX>_frqx.txt is before heterozygosity filtering, but formatted the way I want
 # <PREFIX>_hetmin.txt is sites that get removed by the filter
@@ -56,7 +56,7 @@ p3<-ggplot(long2, aes(x=value, color=measure), alpha=0.5) +
 out<-paste0(filedir,prefix, "_frqx2.jpeg")
 ggsave(out, p3, height=3, width=5)
 
-############# plot depth----------------
+############# VARIANT DEPTH --------
 df <- read.delim("~//Documents/PhD/Research/vcf_filtering/large_files/depth.txt",
                       header = F, sep = " ")
 
@@ -69,7 +69,7 @@ dp <- ggplot() + geom_density(data = df, aes(x=V3)) +
   theme_classic() + xlab("depth") + ggtitle("Capsella bursa-pastoris depth filter - x-axis truncated")
 
 
-############## Distribution of Missing Genotypes-----------
+############## VARIANT MISSINGNESS --------
 prefix <- "CBP_variant_msu"
 
 # load data for site missingness
@@ -86,7 +86,7 @@ ggsave(paste0(filedir, prefix, "missing_variants.jpeg"), vmiss_p1, height=4, wid
 vmiss_p2 <- ggplot() + geom_boxplot(data = vmiss_filt, aes(x=X.CHROM, y = F_MISS))
 ggsave(paste0(filedir, prefix, "missing_variants_filt.jpeg"), vmiss_p2, height=4, width=10)
 
-######## Individuals by heterozygosity--------
+######################## INDIVIDUAL HETEROZYGOSITY AND MISSINGNESS --------
 scount <- read.delim(paste0(filedir, prefix, ".scount"))
 vcf_dat <- read.delim("~/Documents/PhD/Research/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata.txt")
 

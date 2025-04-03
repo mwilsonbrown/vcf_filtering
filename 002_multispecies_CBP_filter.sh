@@ -4,7 +4,7 @@
 #SBATCH --nodes=10
 #SBATCH --cpus-per-task=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=0-10:00:00
+#SBATCH --time=0-30:00:00
 #SBATCH --partition=josephsnodes
 #SBATCH --account=josephsnodes
 #SBATCH --export=NONE
@@ -37,76 +37,76 @@ module load PLINK/2.00a3.7-gfbf-2023a
 module load R/4.3.2-gfbf-2023a
 
 ##### PIPELINE #####
-## remove F2s, parent, and pool
-#bcftools view --samples-file ^"$OUTDIR"/removeCBP_vcf.txt $RAW_VCF -Oz -o "$PREFIX"_rmF2.vcf.gz
-#
-### GATK best practices hard filters
-#bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
-#	-Ou \
-#	"$PREFIX"_rmF2.vcf.gz | bcftools view -f.,PASS \
-#	-Oz -o "$PREFIX"_filter1.vcf.gz
-#
-#echo "Filter1 complete"
-#
-## start fitering report
-#touch "$WORKDIR"/"$PREFIX"_log.txt
-#
-#echo "$PREFIX" >> "$PREFIX"_log.txt
-#echo "GATK best practices filter" >> "$PREFIX"_log.txt
-#echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
-#	>> "$PREFIX"_log.txt
-#echo "Sample count" >> "$PREFIX"_log.txt
-#echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
-#	>> "$PREFIX"_log.txt
-#
-########### BASIC SITE FILTERS
-### require 3 reads to call and keep only biallelic sites; dump entirely missing sites
-#bcftools filter -e'FMT/DP<3' -S . -Ou "$PREFIX"_filter1.vcf.gz | bcftools view -i 'F_MISSING<1' -m2 -M2 -Ov -o "$PREFIX"_temp2.vcf
-#
-## log progress
-#echo "temp2 complete"
-#
-#echo "3 reads called and biallelic sites" >> "$PREFIX"_log.txt
-#echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
-#	>> "$PREFIX"_log.txt
-#
-########### SITE QUALITY FILTERS
-## filter sites with > 5% het & > 5% missing data
-### calculate proportion het per site with plink
-#plink2 --vcf "$PREFIX"_temp2.vcf \
-#	--remove "$OUTDIR"/CgNp.txt \
-#	--geno-counts cols=chrom,pos,ref,alt,homref,refalt,homalt1 \
-#	--allow-extra-chr \
-#	--double-id \
-#	--out "$PREFIX"
-#
-#echo "plink genotype caluclation complete"
-#
-### list of site ids for following Rscript
-##bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf > "$PREFIX"_sites.txt
-#
-### Produce list of sites to filter by heterozygosity
-#Rscript ~/vcf_filtering/002a_het_sites.R "$PREFIX".gcount 0.05 "$PREFIX"
-#
-## highly het sites to  remove file
-#cut -f1,2 "$PREFIX"_hetmin.txt | tail -n+2 > remove.txt
-#
-### remove highly heterozygous sites and sites with 5% missing calls
-#bcftools view --targets-file ^remove.txt "$PREFIX"_temp2.vcf -o "$PREFIX"_temp3.vcf
-#
-## log
-#echo "heterozygisty filter complete"
-#
-#echo "Heterozygosity site filter" >> "$PREFIX"_log.txt
-#echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp3.vcf | wc -l) \
-#	>> "$PREFIX"_log.txt
-#
-## calculate site missingness (with plink2 for plotting)
-#plink2 --vcf "$PREFIX"_temp3.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
-#  --allow-extra-chr \
-#  --double-id \
-#  --out "$PREFIX"
-#
+# remove F2s, parent, and pool
+bcftools view --samples-file ^"$OUTDIR"/removeCBP_vcf.txt $RAW_VCF -Oz -o "$PREFIX"_rmF2.vcf.gz
+
+## GATK best practices hard filters
+bcftools filter -e'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
+-Ou \
+"$PREFIX"_rmF2.vcf.gz | bcftools view -f.,PASS \
+-Oz -o "$PREFIX"_filter1.vcf.gz
+
+echo "Filter1 complete"
+
+# start fitering report
+touch "$WORKDIR"/"$PREFIX"_log.txt
+
+echo "$PREFIX" >> "$PREFIX"_log.txt
+echo "GATK best practices filter" >> "$PREFIX"_log.txt
+echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
+>> "$PREFIX"_log.txt
+echo "Sample count" >> "$PREFIX"_log.txt
+echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
+>> "$PREFIX"_log.txt
+
+########## BASIC SITE FILTERS
+## require 3 reads to call and keep only biallelic sites; dump entirely missing sites
+bcftools filter -e'FMT/DP<3' -S . -Ou "$PREFIX"_filter1.vcf.gz | bcftools view -i 'F_MISSING<1' -m2 -M2 -Ov -o "$PREFIX"_temp2.vcf
+
+# log progress
+echo "temp2 complete"
+
+echo "3 reads called and biallelic sites" >> "$PREFIX"_log.txt
+echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf | wc -l) \
+>> "$PREFIX"_log.txt
+
+########## SITE QUALITY FILTERS
+# filter sites with > 5% het & > 5% missing data
+## calculate proportion het per site with plink
+plink2 --vcf "$PREFIX"_temp2.vcf \
+--remove "$OUTDIR"/CgNp.txt \
+--geno-counts cols=chrom,pos,ref,alt,homref,refalt,homalt1 \
+--allow-extra-chr \
+--double-id \
+--out "$PREFIX"
+
+echo "plink genotype caluclation complete"
+
+## list of site ids for following Rscript
+#bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp2.vcf > "$PREFIX"_sites.txt
+
+## Produce list of sites to filter by heterozygosity
+Rscript ~/vcf_filtering/002a_het_sites.R "$PREFIX".gcount 0.05 "$PREFIX"
+
+# highly het sites to  remove file
+cut -f1,2 "$PREFIX"_hetmin.txt | tail -n+2 > remove.txt
+
+## remove highly heterozygous sites and sites with 5% missing calls
+bcftools view --targets-file ^remove.txt "$PREFIX"_temp2.vcf -o "$PREFIX"_temp3.vcf
+
+# log
+echo "heterozygisty filter complete"
+
+echo "Heterozygosity site filter" >> "$PREFIX"_log.txt
+echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp3.vcf | wc -l) \
+>> "$PREFIX"_log.txt
+
+# calculate site missingness (with plink2 for plotting)
+plink2 --vcf "$PREFIX"_temp3.vcf --missing variant-only vcols=chrom,pos,nmiss,nobs,fmiss \
+ --allow-extra-chr \
+ --double-id \
+ --out "$PREFIX"
+
 # Keep sites where at least 95% is not missing
 bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_temp4.vcf.gz
 

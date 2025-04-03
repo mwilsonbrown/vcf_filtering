@@ -48,8 +48,8 @@ echo $(bcftools query -l "$PREFIX"_qualfiltered.vcf.gz | wc -l) \
 
 ################## SPLIT SPECIES TO ID MINOR ALLELE FRQ THRESHOLDS
 ## Make species group file
-##cp ~/vcf_filtering/individuals/final_CBP_CRCGCONP_filtered_inds.txt ./
-#
+bcftools query -l "$PREFIX"_qualfiltered.vcf.gz > "$PREFIX"_samples.txt
+
 ## add Rscript make_pop_MAF_filter.R here
 #
 ### Filter VCF on species minor allele freq
