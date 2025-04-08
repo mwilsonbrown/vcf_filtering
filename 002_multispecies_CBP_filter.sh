@@ -143,5 +143,5 @@ echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter2.vcf.gz | wc -l) \
 plink2 --vcf "$PREFIX"_filter2.vcf.gz \
 	--sample-counts cols=homref,het,homalt \
 	--allow-extra-chr \
-        --double-id \
-        --out "$PREFIX"
+  --double-id \
+  --out "$PREFIX"

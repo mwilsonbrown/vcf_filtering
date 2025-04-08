@@ -50,14 +50,31 @@ echo $(bcftools query -l "$PREFIX"_qualfiltered.vcf.gz | wc -l) \
 ## Make species group file
 bcftools query -l "$PREFIX"_qualfiltered.vcf.gz > "$PREFIX"_samples.txt
 
-## add Rscript make_pop_MAF_filter.R here
-#
-### Filter VCF on species minor allele freq
-## first, split the VCF into species groups
-#bcftools +split --groups-file /mnt/home/wils1582/vcf_filtering/individuals/ \
-#  /mnt/research/josephslab/Maya/"$PREFIX"_filtered.vcf.gz
-#  
-## Splitting the VCF by species introduces invariant sites
+Rscript make_pop_MAF_filter.R "$PREFIX"_samples.txt ~/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata.txt "$PREFIX"
+
+## Filter VCF on species minor allele freq
+# first, split the VCF into species groups
+bcftools +split --groups-file "$WORKDIR"/"$PREFIX"_species.txt "$PREFIX"_qualfiltered.vcf.gz
+
+# Splitting the VCF by species introduces invariant sites
+# Calculate allele frequencies with PLINK2 for each species VCF
+plink2 --vcf CBP.vcf \
+  --freq cols=-maybeprovref \
+  --allow-extra-chr \
+  --double-id \
+  --out CBP_split
+  
+plink2 --vcf CR.vcf \
+  --freq cols=-maybeprovref \
+  --allow-extra-chr \
+  --double-id \
+  --out CR_split
+  
+plink2 --vcf CG.vcf \
+  --freq cols=-maybeprovref \
+  --allow-extra-chr \
+  --double-id \
+  --out CG_split
 ## In R
 ## Read in allele frquency file caluculated with PLINK
 #cbp_frq <- read.delim("./CBP_split.afreq")

@@ -6,7 +6,7 @@
 # plot plink.frqx; cjfiscus; 2020-09-12
 #
 # usage
-# Rscript plot_frqx.R plink.gcount sites.txt 0.1 prefix
+# Rscript plot_frqx.R plink.gcount 0.1 prefix
 # args[1] is plink2 gcount file with cols=chrom,pos,ref,alt,homref,refalt,homalt1
 # args[2] is min het threshold for filtered list
 # args[3] is output prefix

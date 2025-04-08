@@ -7,13 +7,13 @@
 #
 #
 ######## VARIABLES--------
-prefix <- "CBP_CRCGCONP"
-filedir <- "~/Documents/PhD/Research/vcf_filtering/large_files/"
+prefix <- "CBP2_CR_CG_on_CBP-CG"
+filedir <- paste0("/mnt/scratch/wils1582/", prefix, "_filtering/")
 #### LIBBABIES----
 library(dplyr)
 library(ggplot2)
 ############ SELFING SPECIES VARIANT HETEROZYGOSITY --------
-# Result from 007a_het_sites.R
+# Result from 002a_het_sites.R
 # <PREFIX>_frqx.txt is before heterozygosity filtering, but formatted the way I want
 # <PREFIX>_hetmin.txt is sites that get removed by the filter
 
@@ -21,13 +21,6 @@ library(ggplot2)
 # this is a distribution before filtering to 5% heterozygosity
 het_frq <- read.csv(paste0(filedir, prefix, "_frqx.txt"),
                    sep = "\t", header = T)
-
-# # caluclate fractions
-# gcount$TOTAL<-df$HOM_REF_CT+df$HET_REF_ALT_CTS+df$HOM_ALT1_CT #sum allele freq
-# gcount$FRAC_HET<-df$HET_REF_ALT_CTS/df$TOTAL # calculate fractions
-# gcount$FRAC_HOMREF<-df$HOM_REF_CT/df$TOTAL 
-# gcount$FRAC_HOMALT<-df$HOM_ALT1_CT/df$TOTAL
-
 # prepare for plotting
 long<- tidyr::pivot_longer(het_frq, cols = c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT"), names_to = "measure")
 
@@ -37,8 +30,6 @@ p1<-ggplot(long, aes(x=value, color=measure), alpha=0.5) +
   theme_classic() +
   theme(legend.position="top")
 
-p2<- ggplot() + geom_histogram()
-#out<-paste0(args[3], "_frqx.jpeg")
 out<-paste0(filedir,prefix, "_frqx.jpeg")
 ggsave(out, p1, height=3, width=5)
 
@@ -48,34 +39,33 @@ after_filt <- het_frq[het_frq$FRAC_HET < 0.05,]
 long2<- tidyr::pivot_longer(after_filt, cols = c("FRAC_HET", "FRAC_HOMREF", "FRAC_HOMALT"), names_to = "measure")
 
 # plotdis
-p3<-ggplot(long2, aes(x=value, color=measure), alpha=0.5) +
+p2<-ggplot(long2, aes(x=value, color=measure), alpha=0.5) +
   geom_density() +
   theme_classic() +
   theme(legend.position="top")
 #out<-paste0(args[3], "_frqx.jpeg")
 out<-paste0(filedir,prefix, "_frqx2.jpeg")
-ggsave(out, p3, height=3, width=5)
+ggsave(out, p2, height=3, width=5)
 
 ############# VARIANT DEPTH --------
-df <- read.delim("~//Documents/PhD/Research/vcf_filtering/large_files/depth.txt",
+df <- read.delim(paste0(filedir, prefix, "_depth.txt"),
                       header = F, sep = " ")
 
 df$V3 <- as.numeric(df$V3)
 thresh <- c(quantile(df$V3, na.rm = TRUE)[4] + 1.5*IQR(df$V3, na.rm = TRUE), quantile(df$V3, na.rm = TRUE)[2] - 1.5*IQR(df$V3, na.rm = TRUE))
 
 dp <- ggplot() + geom_density(data = df, aes(x=V3)) +
-  xlim(0,7000) + geom_vline(aes(xintercept = thresh[1]), color="red") + 
+  xlim(0,(thresh[1]+1000)) + geom_vline(aes(xintercept = thresh[1]), color="red") + 
   geom_vline(aes(xintercept = thresh[2]), color = "blue") + 
   theme_classic() + xlab("depth") + ggtitle("Capsella bursa-pastoris depth filter - x-axis truncated")
-
+out<-paste0(filedir,prefix, "_depth.jpeg")
+ggsave(out, dp, height=3, width=5)
 
 ############## VARIANT MISSINGNESS --------
-prefix <- "CBP_variant_msu"
-
 # load data for site missingness
 vmiss <- read.csv(paste0(filedir, prefix, ".vmiss"), 
                    sep = "\t", header = T)
-# filter of 20% missing
+# filter of 5% missing
 vmiss_filt <- vmiss[which(vmiss$F_MISS < 0.05),]
 
 #plot missing-ness by scaffold
@@ -88,7 +78,7 @@ ggsave(paste0(filedir, prefix, "missing_variants_filt.jpeg"), vmiss_p2, height=4
 
 ######################## INDIVIDUAL HETEROZYGOSITY AND MISSINGNESS --------
 scount <- read.delim(paste0(filedir, prefix, ".scount"))
-vcf_dat <- read.delim("~/Documents/PhD/Research/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata.txt")
+vcf_dat <- read.delim("~/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata.txt")
 
 # calulate heterozygosity
 scount$prop_het <- scount$HET_CT/(scount$HOM_REF_CT + scount$HOM_ALT_CT + scount$HET_CT)
