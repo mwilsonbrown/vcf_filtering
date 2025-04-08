@@ -25,7 +25,7 @@ library(dplyr)
 library(stringr)
 
 # make data frame to rename JL new samples
-samples_var$new <- str_remove_all(samples_var$V1, "_R1_001.fastq.gz.trimmed.fastq.sam")
+samples_var$new <- str_remove_all(samples_var$V1, "_1.fastq.gz")
 
 # join info of samples to samples in VCF
 dat <- left_join(samples_var, vcf_info, join_by("new" == "vcf_sample_name"))
@@ -33,31 +33,31 @@ dat <- left_join(samples_var, vcf_info, join_by("new" == "vcf_sample_name"))
 # create tibble for file
 #vcf_sp <- dat %>% group_by(species) %>% summarise(inds_pre = n())
 
-# subset each species; just to know
-cbp_all <- dat[which(dat$species == "Capsella bursa-pastoris"),]
-cg <- dat[which(dat$species == "Capsella grandiflora"),]
-cr <- dat[which(dat$species == "Capsella rubella"),]
-
-######### selecting only cbp I want--------
-# remove F2s because I do not need those
-cbp <- cbp_all[str_detect(cbp_all$sample_name, "F2_", negate = T),] #remove rows with F2 in the sample_name
-# remove parents and pool
-cbp <- cbp[str_detect(cbp$sample_name, "pool", negate = T),]
-cbp <- cbp[str_detect(cbp$sample_name, "parent", negate = T),]
-
-## get list of cbp I want to remove from vcf
-rm <- cbp_all %>% anti_join(cbp)
-
-# write removal list to file
-write.table(rm$V1,
-            paste(outdir, "removeCBP_vcf.txt", sep = "/"), 
-            sep = "\t", row.names = F, col.names = F, quote = F)
-
-# write C. grandiflora and Neslia paniculata to file so they are not removed during heterozygosity step
-write.table(cg$V1, 
-            paste(outdir, "CgNp.txt", sep = "/"), 
-            sep = "\t", row.names=F, col.names = F, quote = F)
-
+## subset each species; just to know
+#cbp_all <- dat[which(dat$species == "Capsella bursa-pastoris"),]
+#cg <- dat[which(dat$species == "Capsella grandiflora"),]
+#cr <- dat[which(dat$species == "Capsella rubella"),]
+#
+########## selecting only cbp I want--------
+## remove F2s because I do not need those
+#cbp <- cbp_all[str_detect(cbp_all$sample_name, "F2_", negate = T),] #remove rows with F2 in the sample_name
+## remove parents and pool
+#cbp <- cbp[str_detect(cbp$sample_name, "pool", negate = T),]
+#cbp <- cbp[str_detect(cbp$sample_name, "parent", negate = T),]
+#
+### get list of cbp I want to remove from vcf
+#rm <- cbp_all %>% anti_join(cbp)
+#
+## write removal list to file
+#write.table(rm$V1,
+#            paste(outdir, "removeCBP_vcf.txt", sep = "/"), 
+#            sep = "\t", row.names = F, col.names = F, quote = F)
+#
+## write C. grandiflora and Neslia paniculata to file so they are not removed during heterozygosity step
+#write.table(cg$V1, 
+#            paste(outdir, "CgNp.txt", sep = "/"), 
+#            sep = "\t", row.names=F, col.names = F, quote = F)
+#
 # write name_change file for BCF tools
 namefile <- paste0(args[2],"_new_names.txt")
 
