@@ -7,7 +7,7 @@
 #
 #
 ######## VARIABLES--------
-prefix <- "CBP2_CR_CG_on_CBP-CG"
+prefix <- "CO_on_CBP-CG"
 filedir <- paste0("/mnt/scratch/wils1582/", prefix, "_filtering/")
 #### LIBBABIES----
 library(dplyr)
@@ -57,7 +57,7 @@ thresh <- c(quantile(df$V3, na.rm = TRUE)[4] + 1.5*IQR(df$V3, na.rm = TRUE), qua
 dp <- ggplot() + geom_density(data = df, aes(x=V3)) +
   xlim(0,(thresh[1]+1000)) + geom_vline(aes(xintercept = thresh[1]), color="red") + 
   geom_vline(aes(xintercept = thresh[2]), color = "blue") + 
-  theme_classic() + xlab("depth") + ggtitle("Capsella bursa-pastoris depth filter - x-axis truncated")
+  theme_classic() + xlab("depth") + ggtitle(paste0(prefix," depth filter - x-axis truncated"))
 out<-paste0(filedir,prefix, "_depth.jpeg")
 ggsave(out, dp, height=3, width=5)
 
