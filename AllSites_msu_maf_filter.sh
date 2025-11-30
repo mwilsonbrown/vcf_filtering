@@ -39,34 +39,39 @@ cp "$INFILES"/*.R "$WORKDIR"
 cd "$WORKDIR"
 
 #### PIPELINE #####
-### GATK best practices hard filters
-# Mark sites
-bcftools filter -e 'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
-"$VCF" > "$PREFIX"_temp.vcf
+### remove No Quality sites
+# 
+# ### GATK best practices hard filters
+# # Mark sites
+# bcftools filter -e 'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
+# "$VCF" > "$PREFIX"_temp.vcf
+# 
+# #filter sites that PASS
+# bcftools view -f.,PASS "$PREFIX"_temp.vcf -Oz -o "$PREFIX"_filter1.vcf.gz
+# 
+# echo "Filter1 complete"
+# 
+# ## start filtering report
+# touch "$WORKDIR"/"$PREFIX"_log.txt
+# 
+# echo "$PREFIX" >> "$WORKDIR"/"$PREFIX"_log.txt
+# echo "GATK best practices filter" >> "$WORKDIR"/"$PREFIX"_log.txt
+# echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
+# >> "$WORKDIR"/"$PREFIX"_log.txt
+# echo "Sample count" >> "$WORKDIR"/"$PREFIX"_log.txt
+# echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
+# >> "$WORKDIR"/"$PREFIX"_log.txt
 
-#filter sites that PASS
-bcftools view -f.,PASS "$PREFIX"_temp.vcf -Oz -o "$PREFIX"_filter1.vcf.gz
-
-echo "Filter1 complete"
-
-## start filtering report
-touch "$WORKDIR"/"$PREFIX"_log.txt
-
-echo "$PREFIX" >> "$WORKDIR"/"$PREFIX"_log.txt
-echo "GATK best practices filter" >> "$WORKDIR"/"$PREFIX"_log.txt
-echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
->> "$WORKDIR"/"$PREFIX"_log.txt
-echo "Sample count" >> "$WORKDIR"/"$PREFIX"_log.txt
-echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
->> "$WORKDIR"/"$PREFIX"_log.txt
+# remove no quality sites
+bcftools view -e 'QUAL="."' "$PREFIX"_filter1.vcf.gz -Oz -o "$PREFIX"_temp1.vcf.gz
 
 # setting regions in next step may require tabix index of vcf
-tabix "$PREFIX"_filter1.vcf.gz
+tabix "$PREFIX"_temp1.vcf.gz
 
 ## require 3 reads to call and Quality over 20, hard filter; set genotypes that do not pass to missing;
 ## then, dump sites with more than 10% missing calls
-bcftools filter -e 'QUAL<20 || FMT/DP<3' --set-GTs . "$PREFIX"_filter1.vcf.gz -Ou | \
-  bcftools view -i 'F_MISSING<0.1' -e 'QUAL="."' -r jlSCF_1,jlSCF_2,jlSCF_3,jlSCF_4,jlSCF_5,jlSCF_6,jlSCF_7,jlSCF_8,jlSCF_9,jlSCF_10,jlSCF_11,jlSCF_12,jlSCF_13,jlSCF_14,jlSCF_15,jlSCF_16 \
+bcftools filter -e 'QUAL<20 || FMT/DP<3' --set-GTs . "$PREFIX"_temp1.vcf.gz -Ou | \
+  bcftools view -i 'F_MISSING<0.1' -r jlSCF_1,jlSCF_2,jlSCF_3,jlSCF_4,jlSCF_5,jlSCF_6,jlSCF_7,jlSCF_8,jlSCF_9,jlSCF_10,jlSCF_11,jlSCF_12,jlSCF_13,jlSCF_14,jlSCF_15,jlSCF_16,contig_1,contig_2 \
   -M2 -Oz -o "$PREFIX"_temp2.vcf
 
 # log progress
