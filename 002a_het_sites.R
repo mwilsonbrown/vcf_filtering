@@ -34,7 +34,7 @@ out<-paste0(args[3], "_frqx.txt")
 write.table(sub, file = out, quote = F, sep = "\t", row.names = F, col.names = T)
 
 # get rows with heterozygosity exceeding threshold set in arguments,
-# these individuals will get removed
+# these sites will get removed
 sub1<-sub[which(sub$FRAC_HET > as.numeric(args[2])),]
 out1<-paste0(args[3], "_hetmin",".txt")
 #fwrite(sub1, out, quote=F, sep="\t")
