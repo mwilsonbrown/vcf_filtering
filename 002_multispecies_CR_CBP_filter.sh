@@ -1,47 +1,45 @@
 #!/bin/bash --login
 #
-#SBATCH --job-name=FilterOrientalis
-#SBATCH --nodes=3
-#SBATCH --time=10:00:00
+#SBATCH --job-name=CBP2_mainFilters
+#SBATCH --nodes=10
+#SBATCH --cpus-per-task=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=0-30:00:00
 #SBATCH --partition=josephsnodes
 #SBATCH --account=josephsnodes
 #SBATCH --export=NONE
 #SBATCH --mem-per-cpu=8G
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=wils1582@msu.edu
-#SBATCH --output=/mnt/scratch/wils1582/slurm/%A.out
-# Filter allsites VCF
-# January 14, 2025
+#SBATCH --output=/mnt/scratch/wils1582/slurm/slurm-%A.out
+# VCF filtering
+# May 12, 2026
 # Maya Wilson Brown
 #
-# Updated Goal: combine the whole VCF filtering procedure into a single script
-#
-######################## SETUP
+# Variables
+PREFIX=CR_CBP_onCBP-CG
+WORKDIR=/mnt/scratch/wils1582/"$PREFIX"_filtering
+RAW_VCF="$PREFIX".vcf.gz
+# change directory
+cd $WORKDIR
+
+# copy Rscripts to working directory
+cp ~/vcf_filtering/*.R $WORKDIR
+
 # purge modules
 module purge
 # load modules
 module load BCFtools/1.18-GCC-12.3.0
+module load PLINK/2.00a3.7-gfbf-2023a
 module load R/4.3.2-gfbf-2023a
 
-## Other vars
-PREFIX=COonCBP-CR
-VCF=/mnt/scratch/wils1582/Orientalis_on_Grandiflora.all.vcf
-WORKDIR=/mnt/scratch/wils1582/CO_filtering
-INFILES=/mnt/home/wils1582/vcf_filtering
-
-# In the case that I do not have execute permissions for my own github repo,
-# copy those files to the working directory
-#mkdir -p $WORKDIR
-
-#cp "$INFILES"/*.R $WORKDIR
-cd $WORKDIR
-
-
 ##### PIPELINE #####
+bcftools reheader -s "$PREFIX"_new_names.txt $RAW_VCF -o "$PREFIX"_rehead_raw.vcf.gz
+
 #### GATK best practices hard filters
 ## Mark sites
 bcftools filter -e 'QD < 2 | FS > 60 | SOR > 3 | MQ < 40 | MQRankSum < -12.5 | ReadPosRankSum < -8.0' \
-"$VCF" > "$PREFIX"_temp.vcf
+"$PREFIX"_rehead_raw.vcf.gz > "$PREFIX"_temp.vcf
 
 #filter sites that PASS
 bcftools view -f.,PASS "$PREFIX"_temp.vcf -Oz -o "$PREFIX"_filter1.vcf.gz
@@ -55,25 +53,25 @@ echo "$PREFIX" >> "$WORKDIR"/"$PREFIX"_log.txt
 
 echo "GATK best practices filter" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter1.vcf.gz | wc -l) \
-	>> "$WORKDIR"/"$PREFIX"_log.txt
+>> "$WORKDIR"/"$PREFIX"_log.txt
 
 echo "Sample count" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -l "$PREFIX"_filter1.vcf.gz | wc -l) \
-	>> "$WORKDIR"/"$PREFIX"_log.txt
+>> "$WORKDIR"/"$PREFIX"_log.txt
 
 # remove 'no quality' sites
 bcftools view -e 'QUAL="."' "$PREFIX"_filter1.vcf.gz -Oz -o "$PREFIX"_temp1.vcf.gz
 
 # record sites after filtering for no quality
-echo "Sites without Quality scores removed" >> "$WORKDIR"/"$PREFIX"_log.txt
+echo "Removed sites without quality scores" >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp1.vcf.gz | wc -l) \
-      >> "$WORKDIR"/"$PREFIX"_log.txt
+     >> "$WORKDIR"/"$PREFIX"_log.txt
 
 ## require 3 reads to call and Quality over 20, hard filter; set genotypes that do not pass to missing;
 ## then, dump sites with more than 10% missing calls;
 ## keep sites with max 2 alleles
 bcftools filter -e 'QUAL<20 || FMT/DP<3' --set-GTs . "$PREFIX"_temp1.vcf.gz -Ou | \
- bcftools view -i 'F_MISSING<0.1' -M2 -Oz -o "$PREFIX"_temp2.vcf
+bcftools view -i 'F_MISSING<0.1' -M2 -Oz -o "$PREFIX"_temp2.vcf
 
 # log progress
 echo "temp2 complete"
@@ -102,8 +100,6 @@ echo "depth filter " >> "$WORKDIR"/"$PREFIX"_log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_filter3.vcf.gz | wc -l) \
 	>> "$WORKDIR"/"$PREFIX"_log.txt
 
-
-
 #Part II:
 # Goals: To go from single species AllSites base filters (ends with filter3)
 # thorugh more site level filters and filtering for minor allele frquency
@@ -118,13 +114,6 @@ module purge
 module load R/4.3.2-gfbf-2023a
 module load PLINK/2.00a3.7-gfbf-2023a
 module load BCFtools/1.18-GCC-12.3.0 #this version of bcftools works with the other modules
-## Other vars
-#PREFIX=CBP_allSites_msu225
-#WORKDIR=/mnt/scratch/wils1582/allSites_msu_filtering
-
-# In the case that I do not have execute permissions for my own github repo,
-# copy those files to the working directory
-#cd "$WORKDIR"
 
 ###### split invariant and potentially variant sites
 # separate out invariant sites with unseen alternative allele
@@ -166,6 +155,15 @@ plink2 --vcf "$PREFIX"_temp3.vcf \
   --double-id \
   --out "$PREFIX"
 
+# Keep sites where at least 95% is not missing
+bcftools view --include 'F_MISSING<0.05' "$PREFIX"_temp3.vcf -Oz -o "$PREFIX"_temp4.vcf.gz
+
+echo "missing data filter complete"
+
+echo "missing site call filter" >> "$PREFIX"_log.txt
+echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_temp4.vcf.gz | wc -l) \
+	>> "$PREFIX"_log.txt
+
 ## Calculate minor allele frequency
 # note that script (of course) only considers variant sites for MAF caluclation
 # generates list of sites to remove because they do not reach MAF threshold (remove_MAF.txt) and 
@@ -173,6 +171,7 @@ plink2 --vcf "$PREFIX"_temp3.vcf \
 Rscript AllSites_CO_calcMAF.R $WORKDIR $PREFIX
 
 ## append invariant sites to low MAF sites file
+# I remove them from the variant sites VCF because I keep them later in the script and do not want duplicates
 cat invariant_sites.txt >> remove_MAF.txt
 
 # Use bcftools to filter on MAF
@@ -207,20 +206,19 @@ echo "Invariant and filtered variant sites combined" >> "$PREFIX"_log.txt
 echo $(bcftools query -f'%CHROM %POS\n' "$PREFIX"_AllSites_snps.vcf | wc -l) \
 >> "$PREFIX"_log.txt
 
-
-# rename samples
-bcftools query -l "$PREFIX"_AllSites_snps.vcf > vcf_samples.txt
-sed 's/_R1_001.fastq.gz.trimmed.fastq.sam//g' vcf_samples.txt > temp_names.txt
-sed -i 's/_R1.fastq.gz.sam//g' temp_names.txt
-paste vcf_samples.txt temp_names.txt > vcf_new_names.txt
-
-bcftools reheader --samples vcf_new_names.txt "$PREFIX"_AllSites_snps.vcf | bcftools view --threads 30 -Oz -o "$PREFIX"_invariantWithfiltered_snps_rehead.vcf.gz
-bcftools reheader --samples vcf_new_names.txt "$PREFIX"_maf_snps.vcf.gz | bcftools view --threads 30 -Oz -o "$PREFIX"_filtered_snps_rehead.vcf.gz
-
-### Individual stats
-plink2 --vcf "$PREFIX"_filtered_snps_rehead.vcf.gz \
-	--sample-counts cols=homref,homalt,het,hapref,hapalt \
+########## INDIVIDUAL STATS
+# calculate stats per ind; also produces missingness per site
+plink2 --vcf "$PREFIX"_AllSites_snps.vcf \
+	--sample-counts cols=homref,het,homalt \
 	--missing \
 	--allow-extra-chr \
-	--double-id \
-	--out "$PREFIX"
+  --double-id \
+  --out "$PREFIX"_AllSites
+
+# calculate stats per ind
+plink2 --vcf "$PREFIX"_maf_snps.vcf.gz \
+        --sample-counts cols=homref,het,homalt \
+        --missing \
+        --allow-extra-chr \
+  --double-id \
+  --out "$PREFIX"_maf_snps

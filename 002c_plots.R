@@ -7,7 +7,7 @@
 #
 #
 ######## VARIABLES--------
-prefix <- "CO_on_CBP-CG"
+prefix <- "CR_CBP_onCBP-CG"
 filedir <- paste0("/mnt/scratch/wils1582/", prefix, "_filtering/")
 #### LIBBABIES----
 library(dplyr)
@@ -80,7 +80,7 @@ ggsave(paste0(filedir, prefix, "missing_variants_filt.jpeg"), vmiss_p2, height=4
 scount <- read.delim(paste0(filedir, prefix, ".scount"))
 vcf_dat <- read.delim("~/capsella_sample_info/generated_mkwb/Capsella_vcf_metadata2.txt")
 
-# calulate heterozygosity
+# calculate heterozygosity
 scount$prop_het <- scount$HET_CT/(scount$HOM_REF_CT + scount$HOM_ALT_CT + scount$HET_CT)
 
 # join with species data
@@ -112,10 +112,10 @@ smiss <- left_join(smiss, vcf_dat, join_by("IID" == "vcf_sample_name"))
 
 # sort by missing
 smiss<-smiss[order(smiss$F_MISS, decreasing=F),]
-smiss$paper_alias<-factor(smiss$paper_alias, levels=unique(smiss$paper_alias))
+smiss$IID<-factor(smiss$IID, levels=unique(smiss$IID))
 
 # plot
-p1<-ggplot(smiss, aes(x=paper_alias, y=F_MISS, fill = species)) + geom_bar(stat="identity") +
+p1<-ggplot(smiss, aes(x=IID, y=F_MISS, fill = species)) + geom_bar(stat="identity") +
   theme_bw() + coord_flip() +
   theme(axis.text.x= element_text(size = 7))
 
